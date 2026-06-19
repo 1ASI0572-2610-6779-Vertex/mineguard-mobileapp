@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_view.dart';
@@ -12,7 +13,9 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(const MobileIotApp());
+  // ProviderScope is the Riverpod root — all providers are scoped here,
+  // which enables overrides in tests without touching production code.
+  runApp(const ProviderScope(child: MobileIotApp()));
 }
 
 class MobileIotApp extends StatelessWidget {
