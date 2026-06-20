@@ -18,4 +18,16 @@ class VehicleRepositoryImpl implements VehicleRepository {
       throw e.error is AppException ? e.error as AppException : ServerException(e.message ?? '');
     }
   }
+
+  @override
+  Future<void> startTrip({
+    required String vehicleId,
+    required int driverId,
+  }) async {
+    try {
+      await _dataSource.startTrip(vehicleId: vehicleId, driverId: driverId);
+    } on DioException catch (e) {
+      throw e.error is AppException ? e.error as AppException : ServerException(e.message ?? '');
+    }
+  }
 }

@@ -1,33 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/domain/entities/models.dart';
+import 'package:mobile_iot/shared/api/session_provider.dart';
 import 'package:mobile_iot/analytics/presentation/performance/performance_view.dart';
 import 'package:mobile_iot/profile/presentation/settings/settings_view.dart';
 import 'package:mobile_iot/assets/presentation/vehicle-selection/vehicle_selection_view.dart';
 
-class OperatorHomeView extends StatefulWidget {
+class OperatorHomeView extends ConsumerStatefulWidget {
   final SessionUser user;
   const OperatorHomeView({super.key, required this.user});
 
   @override
-  State<OperatorHomeView> createState() => _OperatorHomeViewState();
+  ConsumerState<OperatorHomeView> createState() => _OperatorHomeViewState();
 }
 
-class _OperatorHomeViewState extends State<OperatorHomeView> {
+class _OperatorHomeViewState extends ConsumerState<OperatorHomeView> {
   int _index = 0;
-  Vehicle? _assignedVehicle;
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(sessionProvider) ?? widget.user;
+
     final tabs = <Widget>[
-      VehicleSelectionView(
-        user: widget.user,
-        assigned: _assignedVehicle,
-        onAssign: (v) => setState(() => _assignedVehicle = v),
-      ),
-      PerformanceView(user: widget.user),
-      SettingsView(user: widget.user),
+      const VehicleSelectionView(),
+      const PerformanceView(),
+      SettingsView(user: user),
     ];
 
     return Scaffold(

@@ -13,4 +13,14 @@ class VehicleRemoteDataSource {
         .map(VehicleDto.fromJson)
         .toList();
   }
+
+  Future<void> startTrip({
+    required String vehicleId,
+    required int driverId,
+  }) async {
+    await _dio.post<void>(
+      '/vehicles/$vehicleId/trips',
+      data: {'driverId': driverId},
+    );
+  }
 }

@@ -11,7 +11,7 @@ class AuthRemoteDataSource {
     required String password,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/sign-in',
+      '/sessions/mobile',
       data: {'workerId': workerId, 'password': password},
     );
     return SignInResponseDto.fromJson(response.data!);

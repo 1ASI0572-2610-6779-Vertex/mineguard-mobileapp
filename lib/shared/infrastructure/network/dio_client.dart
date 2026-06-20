@@ -33,6 +33,7 @@ class DioClient {
     dio.interceptors.addAll([
       _AuthInterceptor(tokenStorage),
       _ErrorInterceptor(),
+      LogInterceptor(requestBody: true, responseBody: true),
     ]);
 
     return dio;

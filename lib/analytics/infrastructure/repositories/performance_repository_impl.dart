@@ -10,9 +10,9 @@ class PerformanceRepositoryImpl implements PerformanceRepository {
   final PerformanceRemoteDataSource _dataSource;
 
   @override
-  Future<PerformanceStats> getPerformance(String workerId) async {
+  Future<PerformanceStats> getPerformance(int driverId) async {
     try {
-      final dto = await _dataSource.getPerformance(workerId);
+      final dto = await _dataSource.getPerformance(driverId);
       return dto.toDomain();
     } on DioException catch (e) {
       throw e.error is AppException ? e.error as AppException : ServerException(e.message ?? '');

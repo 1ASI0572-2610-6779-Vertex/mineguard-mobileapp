@@ -15,6 +15,6 @@ class AlertRemoteDataSource {
   }
 
   Future<void> submitAlertAction(String alertId) async {
-    await _dio.post<void>('/alerts/$alertId/action');
+    await _dio.post<void>('/alerts/$alertId/actions');
   }
 }

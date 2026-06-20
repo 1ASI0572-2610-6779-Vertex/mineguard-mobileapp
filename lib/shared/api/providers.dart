@@ -7,21 +7,22 @@ import '../infrastructure/network/token_storage.dart';
 // ── Change this via a build flavor / --dart-define in CI ──────────────────────
 const _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'https://api.mineguard.io/v1',
+
+  defaultValue: 'http://10.0.2.2:8080/api/v1',
 );
 
 final secureStorageProvider = Provider<FlutterSecureStorage>(
-  (_) => const FlutterSecureStorage(
+      (_) => const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   ),
 );
 
 final tokenStorageProvider = Provider<TokenStorage>(
-  (ref) => TokenStorage(ref.watch(secureStorageProvider)),
+      (ref) => TokenStorage(ref.watch(secureStorageProvider)),
 );
 
 final dioProvider = Provider<Dio>(
-  (ref) => DioClient(
+      (ref) => DioClient(
     baseUrl: _kBaseUrl,
     tokenStorage: ref.watch(tokenStorageProvider),
   ).instance,

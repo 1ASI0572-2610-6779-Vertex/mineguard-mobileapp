@@ -6,8 +6,10 @@ class PerformanceRemoteDataSource {
 
   final Dio _dio;
 
-  Future<PerformanceDto> getPerformance(String workerId) async {
-    final response = await _dio.get<Map<String, dynamic>>('/performance/$workerId');
+  Future<PerformanceDto> getPerformance(int driverId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/drivers/$driverId/performance',
+    );
     return PerformanceDto.fromJson(response.data!);
   }
 }
