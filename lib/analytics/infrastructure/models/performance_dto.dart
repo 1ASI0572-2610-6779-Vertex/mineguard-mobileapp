@@ -1,8 +1,11 @@
 import '../../../shared/domain/entities/models.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
-/// No value transformation — field names and types match the API contract
-/// exactly, per the business rule that this is a read-only view-model.
+/// DTO de lectura para el desempeño del conductor.
+///
+/// No realiza transformaciones de negocio: los nombres y tipos de campos se
+/// alinean directamente con el contrato del API y luego se mapean al modelo de
+/// dominio `PerformanceStats`.
 class PerformanceDto {
   const PerformanceDto({
     required this.safetyScore,
@@ -18,6 +21,11 @@ class PerformanceDto {
   final double drivingHours;
   final double drivingHoursLimit;
 
+  /// Construye el DTO a partir del JSON del backend.
+  ///
+  /// Se acepta que algunos entornos serialicen horas como `int`; por eso se
+  /// normalizan a `double`. Si la estructura no coincide, se lanza
+  /// `ParseException`.
   factory PerformanceDto.fromJson(Map<String, dynamic> json) {
     try {
       return PerformanceDto(
@@ -33,6 +41,7 @@ class PerformanceDto {
     }
   }
 
+  /// Convierte el DTO a la entidad de dominio utilizada por la UI.
   PerformanceStats toDomain() => PerformanceStats(
         safetyScore: safetyScore,
         safetyScoreDelta: safetyScoreDelta,

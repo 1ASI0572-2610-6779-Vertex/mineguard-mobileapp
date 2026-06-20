@@ -7,6 +7,10 @@ import 'package:mobile_iot/shared/domain/entities/models.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
 import 'performance_controller.dart';
 
+/// Pantalla de analytics que resume el desempeño operativo del conductor.
+///
+/// Combina el saludo de sesión, el estado asíncrono del repositorio y varias
+/// tarjetas informativas para mostrar score, alertas y horas conducidas.
 class PerformanceView extends ConsumerWidget {
   const PerformanceView({super.key});
 
@@ -53,6 +57,7 @@ class PerformanceView extends ConsumerWidget {
   }
 }
 
+/// Renderiza el contenido principal cuando ya existen métricas disponibles.
 class _PerformanceContent extends StatelessWidget {
   final PerformanceStats stats;
   const _PerformanceContent({required this.stats});
@@ -174,6 +179,7 @@ class _PerformanceContent extends StatelessWidget {
   }
 }
 
+/// Barra de progreso de la jornada basada en horas conducidas vs límite.
 class _HoursProgressBar extends StatelessWidget {
   final PerformanceStats stats;
   const _HoursProgressBar({required this.stats});
@@ -239,6 +245,7 @@ class _HoursProgressBar extends StatelessWidget {
   }
 }
 
+/// Tarjeta reutilizable para mostrar una métrica resumida con pie contextual.
 class _StatTile extends StatelessWidget {
   final String label;
   final String value;
@@ -320,6 +327,7 @@ class _StatTile extends StatelessWidget {
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 
+/// Estado de carga con esqueletos visuales para evitar saltos de layout.
 class _PerformanceSkeleton extends StatelessWidget {
   const _PerformanceSkeleton();
 
@@ -406,6 +414,7 @@ class _PerformanceSkeleton extends StatelessWidget {
   }
 }
 
+/// Bloque animado sencillo usado para representar un placeholder de carga.
 class _SkeletonBox extends StatefulWidget {
   const _SkeletonBox({
     required this.width,
@@ -455,6 +464,7 @@ class _SkeletonBoxState extends State<_SkeletonBox>
       );
 }
 
+/// Estado de error con acción de reintento para recuperar la carga.
 class _ErrorRetry extends StatelessWidget {
   final Object error;
   final VoidCallback onRetry;
@@ -504,6 +514,7 @@ class _ErrorRetry extends StatelessWidget {
   }
 }
 
+/// Envuelve tarjetas para animar su aparición con fade y desplazamiento.
 class _AnimatedCard extends StatefulWidget {
   final Widget child;
   final int delay;
