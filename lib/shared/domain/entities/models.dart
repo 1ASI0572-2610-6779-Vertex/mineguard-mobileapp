@@ -4,11 +4,13 @@ class SessionUser {
   final String workerId;
   final String fullName;
   final UserRole role;
+  final int? driverId;
 
   const SessionUser({
     required this.workerId,
     required this.fullName,
     required this.role,
+    this.driverId,
   });
 
   bool get isOperator => role == UserRole.operator;
