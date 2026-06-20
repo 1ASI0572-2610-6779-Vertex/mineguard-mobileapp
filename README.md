@@ -1,7 +1,6 @@
 # MineGuard Mobile App
 
-MineGuard Mobile App is the mobile interface of the MineGuard IoT solution.  
-It is designed for mine operators and supervisors who need to access vehicle assignment, performance indicators, safety alerts and profile settings from a mobile device.
+The MineGuard Mobile App serves as the portable gateway for the MineGuard IoT ecosystem. It is specifically tailored for mining personnel and supervisors who require on-the-go access to fleet assignments, performance metrics, critical safety alerts, and user configurations.
 
 ## Main Features
 
