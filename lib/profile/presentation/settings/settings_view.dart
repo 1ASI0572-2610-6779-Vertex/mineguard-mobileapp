@@ -34,7 +34,7 @@ class SettingsView extends StatelessWidget {
               const SizedBox(height: 10),
               _SettingsTile(
                 title: 'Manual de zonas',
-                onTap: () => _showSoon(context),
+                onTap: () => _showZoneManual(context),
               ),
               const SizedBox(height: 24),
               OutlinedButton.icon(
@@ -63,8 +63,43 @@ class SettingsView extends StatelessWidget {
   }
 
   void _showSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pendiente de implementar')),
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Pendiente de implementar')));
+  }
+
+  void _showZoneManual(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Manual de zonas'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Consulta rápida para la operación minera:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 12),
+            Text('🟢 Zona segura: área habilitada para circulación normal.'),
+            SizedBox(height: 8),
+            Text(
+              '🟡 Zona de riesgo: área que requiere precaución y monitoreo.',
+            ),
+            SizedBox(height: 8),
+            Text(
+              '🔴 Zona restringida: área crítica o no autorizada para el operador.',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
     );
   }
 
