@@ -14,7 +14,15 @@ class AlertRemoteDataSource {
         .toList();
   }
 
+  /// Marks the alert as reviewed/resolved.
+  ///
+  /// The backend has no dedicated "action" sub-resource for alerts — closing
+  /// one is a partial update of the alert itself: `PATCH /alerts/{id}` with
+  /// `{"status": "resolved"}`.
   Future<void> submitAlertAction(String alertId) async {
-    await _dio.post<void>('/alerts/$alertId/actions');
+    await _dio.patch<void>(
+      '/alerts/$alertId',
+      data: {'status': 'resolved'},
+    );
   }
 }

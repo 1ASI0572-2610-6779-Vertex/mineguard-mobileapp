@@ -19,7 +19,7 @@ class VehicleRemoteDataSource {
     required int driverId,
   }) async {
     await _dio.post<void>(
-      '/vehicles/$vehicleId/trips',
+      '/vehicles/$vehicleId/driving-sessions',
       data: {'driverId': driverId},
     );
   }

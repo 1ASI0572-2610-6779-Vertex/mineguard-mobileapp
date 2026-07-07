@@ -35,7 +35,11 @@ class VehicleSelectionState {
 class VehicleSelectionController extends Notifier<VehicleSelectionState> {
   @override
   VehicleSelectionState build() {
-    _fetchVehicles();
+    // Deferred to a microtask: _fetchVehicles() reads/writes `state`, which
+    // Riverpod only allows once build() has returned and the provider has
+    // an initial state. Calling it synchronously here throws "Tried to read
+    // the state of an uninitialized provider".
+    Future.microtask(_fetchVehicles);
     return const VehicleSelectionState();
   }
 

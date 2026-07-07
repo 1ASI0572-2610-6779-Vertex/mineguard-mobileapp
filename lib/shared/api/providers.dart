@@ -8,7 +8,7 @@ import '../infrastructure/network/token_storage.dart';
 const _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
 
-  defaultValue: 'http://10.0.2.2:8080/api/v1',
+  defaultValue: 'https://mineguard-webservice.onrender.com/api/v1',
 );
 
 final secureStorageProvider = Provider<FlutterSecureStorage>(

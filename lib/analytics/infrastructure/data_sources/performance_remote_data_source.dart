@@ -10,10 +10,10 @@ class PerformanceRemoteDataSource {
 
   final Dio _dio;
 
-  /// Obtiene el desempeño del conductor en el endpoint `/drivers/:id/performance`.
+  /// Obtiene el desempeño del conductor en el endpoint `/drivers/:id/scores`.
   Future<PerformanceDto> getPerformance(int driverId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/drivers/$driverId/performance',
+      '/drivers/$driverId/scores',
     );
     return PerformanceDto.fromJson(response.data!);
   }

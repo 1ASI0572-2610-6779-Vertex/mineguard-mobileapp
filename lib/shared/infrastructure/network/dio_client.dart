@@ -24,8 +24,11 @@ class DioClient {
     final dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 30),
+        // Render free-tier instance spins down when idle and can take up to
+        // ~140s to cold-boot on the next request — timeouts are sized to
+        // survive that instead of failing on the first request after idle.
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       ),
     );

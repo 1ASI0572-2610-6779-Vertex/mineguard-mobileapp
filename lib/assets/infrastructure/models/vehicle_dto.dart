@@ -30,14 +30,20 @@ class VehicleDto {
 
   /// Safely parses a JSON map into a [VehicleDto].
   ///
+  /// The backend's `GET /vehicles` serializes `VehicleResource` — `id` is a
+  /// numeric `Long`, and there is no single `name` field, only `code` +
+  /// `model` — so both are read here and combined for display.
+  ///
   /// Throws a [ParseException] if the JSON structure is malformed or missing
   /// required fields. This fail-fast approach prevents null-pointer exceptions
   /// deeper in the application.
   factory VehicleDto.fromJson(Map<String, dynamic> json) {
     try {
+      final code = json['code'] as String;
+      final model = json['model'] as String;
       return VehicleDto(
-        id: json['id'] as String,
-        name: json['name'] as String,
+        id: json['id'].toString(),
+        name: model.isEmpty ? code : '$code · $model',
         category: json['category'] as String,
         status: json['status'] as String,
       );
@@ -51,17 +57,19 @@ class VehicleDto {
   /// **Business Rule Implementation:**
   /// The backend might introduce new status strings over time. To protect the UI
   /// and Domain from unknown states, this method acts as an Anti-Corruption Layer.
-  /// It strictly maps known statuses ('available', 'inUse') to the domain enum.
-  /// Any unrecognized or unhandled status gracefully defaults to
+  /// It maps the backend's `VehicleStatus` state machine — `OPERATIONAL` (the
+  /// only state that allows check-in), `IN_TRANSIT` (already on an active
+  /// shift) — to the domain enum. Any other backend status (`MAINTENANCE`,
+  /// `ALERT`, `INACTIVE`, `RESTRICTED_ROUTE`) gracefully defaults to
   /// [VehicleStatus.maintenance], ensuring the UI never displays an unsafe or
   /// falsely operational state.
   Vehicle toDomain() => Vehicle(
     id: id,
     name: name,
     category: category,
-    status: switch (status) {
-      'available' => VehicleStatus.available,
-      'inUse' => VehicleStatus.inUse,
+    status: switch (status.toUpperCase()) {
+      'OPERATIONAL' => VehicleStatus.available,
+      'IN_TRANSIT' => VehicleStatus.inUse,
       _ => VehicleStatus.maintenance,
     },
   );

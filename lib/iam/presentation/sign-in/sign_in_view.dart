@@ -5,6 +5,7 @@ import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/api/session_provider.dart';
 import 'package:mobile_iot/bootstrap/presentation/operator-home/operator_home_view.dart';
 import 'package:mobile_iot/monitoring/presentation/supervisor-alerts/supervisor_alerts_view.dart';
+import 'package:mobile_iot/shared/infrastructure/network/app_exception.dart';
 import 'sign_in_controller.dart';
 
 class SignInView extends ConsumerStatefulWidget {
@@ -185,16 +186,13 @@ class _SignInViewState extends ConsumerState<SignInView> {
   }
 
   String _friendlyError(Object? error) {
-    final msg = error?.toString() ?? '';
     if (error is UnimplementedError) return 'Función no implementada';
-    if (msg.contains('Session expired') || msg.contains('401')) {
+    if (error is UnauthorizedException || error is ClientException) {
       return 'ID o contraseña incorrectos';
     }
-    if (msg.contains('No internet') || msg.contains('NetworkException') ||
-        msg.contains('SocketException') || msg.contains('connect')) {
+    if (error is NetworkException) {
       return 'Sin conexión con el servidor. Verifica tu red';
     }
-    if (msg.contains('ClientException')) return 'ID o contraseña incorrectos';
     return 'Error al iniciar sesión. Inténtalo de nuevo';
   }
 }
