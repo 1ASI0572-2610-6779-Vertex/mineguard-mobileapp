@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/domain/entities/session_user.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
+import 'package:mobile_iot/shared/widgets/language_toggle.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
 import 'bloc/bloc.dart';
 
@@ -14,6 +16,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return BlocProvider<ProfileCubit>(
       create: (_) => serviceLocator<ProfileCubit>(),
       child: Column(
@@ -23,9 +26,9 @@ class SettingsScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text(
-                  'Settings',
-                  style: TextStyle(
+                Text(
+                  l10n.settingsTitle,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -33,14 +36,16 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 _SettingsTile(
-                  title: 'Update password',
+                  title: l10n.settingsUpdatePassword,
                   onTap: () => _showSoon(context),
                 ),
                 const SizedBox(height: 10),
                 _SettingsTile(
-                  title: 'Zone manual',
+                  title: l10n.settingsZoneManual,
                   onTap: () => _showZoneManual(context),
                 ),
+                const SizedBox(height: 10),
+                _LanguageTile(label: l10n.settingsLanguageLabel),
                 const SizedBox(height: 24),
                 BlocBuilder<ProfileCubit, ProfileState>(
                   builder: (context, state) => OutlinedButton.icon(
@@ -48,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
                         ? null
                         : () => _confirmLogout(context),
                     icon: const Icon(Icons.logout, size: 18),
-                    label: const Text('Sign Out'),
+                    label: Text(l10n.commonSignOutButton),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       backgroundColor: AppColors.errorSoft,
@@ -73,40 +78,38 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showSoon(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Not implemented yet')));
+    ).showSnackBar(SnackBar(content: Text(l10n.settingsNotImplemented)));
   }
 
   void _showZoneManual(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Zone manual'),
-        content: const Column(
+        title: Text(l10n.settingsZoneManual),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Quick reference for mining operations:',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              l10n.settingsZoneManualIntro,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 12),
-            Text('🟢 Safe zone: area cleared for normal traffic.'),
-            SizedBox(height: 8),
-            Text(
-              '🟡 Risk zone: area requiring caution and monitoring.',
-            ),
-            SizedBox(height: 8),
-            Text(
-              '🔴 Restricted zone: critical area, not authorized for operators.',
-            ),
+            const SizedBox(height: 12),
+            Text(l10n.settingsZoneSafe),
+            const SizedBox(height: 8),
+            Text(l10n.settingsZoneRisk),
+            const SizedBox(height: 8),
+            Text(l10n.settingsZoneRestricted),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Got it'),
+            child: Text(l10n.settingsGotIt),
           ),
         ],
       ),
@@ -114,20 +117,21 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign out'),
-        content: const Text('Are you sure you want to sign out of your account?'),
+        title: Text(l10n.commonSignOutTitle),
+        content: Text(l10n.commonSignOutConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign Out'),
+            child: Text(l10n.commonSignOutButton),
           ),
         ],
       ),
@@ -183,6 +187,41 @@ class _SettingsTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Settings row hosting the language switcher (primary location — the
+/// secondary one is Supervisor Alerts' header, since supervisors never see
+/// this screen).
+class _LanguageTile extends StatelessWidget {
+  final String label;
+  const _LanguageTile({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          const LanguageToggle(),
+        ],
       ),
     );
   }

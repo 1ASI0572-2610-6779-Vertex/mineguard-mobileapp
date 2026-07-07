@@ -4,8 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
+import 'package:mobile_iot/shared/widgets/language_toggle.dart';
+import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
 import 'package:mobile_iot/iam/api/iam_api.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
 import '../../domain/entities/safety_alert.dart';
 import 'bloc/bloc.dart';
@@ -21,6 +24,7 @@ class SupervisorAlertsScreen extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final user = context.watch<SessionCubit>().state;
+          final l10n = AppLocalizations.of(context)!;
 
           return Scaffold(
             backgroundColor: AppColors.backgroundMuted,
@@ -38,11 +42,17 @@ class SupervisorAlertsScreen extends StatelessWidget {
                       Positioned(
                         top: 16,
                         right: 12,
-                        child: IconButton(
-                          icon: const Icon(Icons.logout,
-                              color: AppColors.textOnDark),
-                          tooltip: 'Sign out',
-                          onPressed: () => _logout(context),
+                        child: Row(
+                          children: [
+                            const LanguageToggle(),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.logout,
+                                  color: AppColors.textOnDark),
+                              tooltip: l10n.commonSignOutTitle,
+                              onPressed: () => _logout(context),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -55,9 +65,9 @@ class SupervisorAlertsScreen extends StatelessWidget {
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                         children: [
-                          const Text(
-                            'TODAY · RECENT',
-                            style: TextStyle(
+                          Text(
+                            l10n.supervisorAlertsSectionHeader,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
@@ -74,8 +84,7 @@ class SupervisorAlertsScreen extends StatelessWidget {
                                   return const _AlertsSkeleton();
                                 case SupervisorAlertsStatus.error:
                                   return _ErrorRetry(
-                                    error: state.errorMessage ??
-                                        'Unknown error',
+                                    error: state.error ?? l10n.commonUnknownError,
                                     onRetry: () => context
                                         .read<SupervisorAlertsBloc>()
                                         .add(const FetchAlertsEvent()),
@@ -99,21 +108,21 @@ class SupervisorAlertsScreen extends StatelessWidget {
   }
 
   Future<void> _logout(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign out'),
-        content: const Text(
-            'Are you sure you want to sign out of your account?'),
+        title: Text(l10n.commonSignOutTitle),
+        content: Text(l10n.commonSignOutConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign Out'),
+            child: Text(l10n.commonSignOutButton),
           ),
         ],
       ),
@@ -136,6 +145,7 @@ class _AlertsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (alerts.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(32),
@@ -150,14 +160,14 @@ class _AlertsList extends StatelessWidget {
             ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             children: [
-              Icon(Icons.check_circle_outline, size: 40, color: AppColors.success),
-              SizedBox(height: 8),
+              const Icon(Icons.check_circle_outline, size: 40, color: AppColors.success),
+              const SizedBox(height: 8),
               Text(
-                'No pending alerts',
-                style: TextStyle(
+                l10n.supervisorAlertsEmpty,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
@@ -184,8 +194,8 @@ class _AlertsList extends StatelessWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content:
-                            Text('"${alerts[i].title}" marked as reviewed'),
+                        content: Text(l10n.supervisorAlertsMarkedReviewed(
+                            alerts[i].title)),
                         backgroundColor: AppColors.success,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
@@ -447,6 +457,7 @@ class _ErrorRetry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -459,9 +470,9 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off_rounded, size: 36, color: AppColors.error),
           const SizedBox(height: 10),
-          const Text(
-            'Failed to load alerts',
-            style: TextStyle(
+          Text(
+            l10n.supervisorAlertsLoadError,
+            style: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
               color: AppColors.textPrimary,
@@ -469,7 +480,7 @@ class _ErrorRetry extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            error.toString(),
+            error is String ? error as String : localizedErrorMessage(context, error),
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
@@ -477,7 +488,7 @@ class _ErrorRetry extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: Text(l10n.commonRetry),
           ),
         ],
       ),

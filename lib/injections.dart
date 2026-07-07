@@ -26,9 +26,11 @@ import 'analytics/api/analytics_api.dart';
 import 'assets/api/assets_api.dart';
 import 'iam/api/iam_api.dart';
 import 'profile/presentation/settings/bloc/profile_cubit.dart';
+import 'shared/application/locale_cubit.dart';
 import 'shared/application/session_cubit.dart';
 import 'shared/infrastructure/network/dio_client.dart';
 import 'shared/infrastructure/network/token_storage.dart';
+import 'shared/infrastructure/storage/locale_preference_storage.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -61,6 +63,10 @@ void sharedDependencies() {
     () => DioClient(baseUrl: _kBaseUrl, tokenStorage: serviceLocator()).instance,
   );
   serviceLocator.registerLazySingleton(() => SessionCubit());
+  serviceLocator.registerLazySingleton(
+    () => LocalePreferenceStorage(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton(() => LocaleCubit(serviceLocator()));
 }
 
 void iamDependencies() {

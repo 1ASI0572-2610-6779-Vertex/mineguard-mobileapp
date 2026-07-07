@@ -7,6 +7,7 @@ import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/analytics/presentation/performance/performance_screen.dart';
 import 'package:mobile_iot/profile/presentation/settings/settings_screen.dart';
 import 'package:mobile_iot/assets/presentation/vehicle-selection/vehicle_selection_screen.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 
 class OperatorHomeScreen extends StatefulWidget {
   final SessionUser user;
@@ -24,6 +25,7 @@ class _OperatorHomeScreenState extends State<OperatorHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<SessionCubit>().state ?? widget.user;
+    final l10n = AppLocalizations.of(context)!;
 
     final tabs = <Widget>[
       const VehicleSelectionScreen(),
@@ -39,21 +41,21 @@ class _OperatorHomeScreenState extends State<OperatorHomeScreen> {
         onDestinationSelected: (i) => setState(() => _index = i),
         backgroundColor: AppColors.backgroundCard,
         indicatorColor: AppColors.primary.withValues(alpha: 0.12),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.directions_car_outlined),
-            selectedIcon: Icon(Icons.directions_car, color: AppColors.primary),
-            label: 'Home',
+            icon: const Icon(Icons.directions_car_outlined),
+            selectedIcon: const Icon(Icons.directions_car, color: AppColors.primary),
+            label: l10n.bootstrapNavHome,
           ),
           NavigationDestination(
-            icon: Icon(Icons.show_chart_outlined),
-            selectedIcon: Icon(Icons.show_chart, color: AppColors.primary),
-            label: 'Performance',
+            icon: const Icon(Icons.show_chart_outlined),
+            selectedIcon: const Icon(Icons.show_chart, color: AppColors.primary),
+            label: l10n.bootstrapNavPerformance,
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppColors.primary),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person, color: AppColors.primary),
+            label: l10n.bootstrapNavProfile,
           ),
         ],
       ),

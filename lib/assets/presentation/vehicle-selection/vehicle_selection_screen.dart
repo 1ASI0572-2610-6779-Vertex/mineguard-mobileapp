@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
+import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
 import '../../domain/entities/vehicle.dart';
 import 'bloc/bloc.dart';
@@ -40,6 +42,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<SessionCubit>().state;
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocProvider<VehicleSelectionBloc>.value(
       value: _bloc,
@@ -50,7 +53,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
           if (state.assignError == null && state.assigned != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Shift started: ${state.assigned!.name}'),
+                content: Text(l10n.vehicleSelectionShiftStarted(state.assigned!.name)),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -66,19 +69,19 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                 children: [
-                  const Text(
-                    'Vehicle Selection',
-                    style: TextStyle(
+                  Text(
+                    l10n.vehicleSelectionTitle,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    "Select the unit assigned for today's shift",
+                  Text(
+                    l10n.vehicleSelectionSubtitle,
                     style:
-                        TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
                   BlocBuilder<VehicleSelectionBloc, VehicleSelectionState>(
@@ -90,7 +93,10 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                         ),
                         if (state.assignError != null) ...[
                           const SizedBox(height: 8),
-                          _InlineError(message: state.assignError!),
+                          _InlineError(
+                            message: localizedErrorMessage(
+                                context, state.assignError!),
+                          ),
                         ],
                       ],
                     ),
@@ -100,7 +106,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                     controller: _searchCtrl,
                     onChanged: (v) => setState(() => _query = v),
                     decoration: InputDecoration(
-                      hintText: 'Search by vehicle',
+                      hintText: l10n.vehicleSelectionSearchHint,
                       hintStyle: const TextStyle(color: AppColors.textMuted),
                       prefixIcon: const Icon(
                         Icons.search,
@@ -136,7 +142,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                           return const _VehicleListSkeleton();
                         case VehicleSelectionStatus.error:
                           return _ErrorRetry(
-                            error: state.errorMessage ?? 'Unknown error',
+                            error: state.error ?? l10n.commonUnknownError,
                             onRetry: () => _bloc.add(const FetchVehiclesEvent()),
                           );
                         case VehicleSelectionStatus.loaded:
@@ -148,13 +154,13 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                           }).toList();
 
                           if (filtered.isEmpty) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
                               child: Center(
                                 child: Text(
-                                  'No vehicles found.',
+                                  l10n.vehicleSelectionEmpty,
                                   style:
-                                      TextStyle(color: AppColors.textSecondary),
+                                      const TextStyle(color: AppColors.textSecondary),
                                 ),
                               ),
                             );
@@ -204,6 +210,7 @@ class _AssignedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasVehicle = vehicle != null;
     return Container(
       padding: const EdgeInsets.all(22),
@@ -247,7 +254,7 @@ class _AssignedCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  hasVehicle ? vehicle!.name : 'No vehicle assigned',
+                  hasVehicle ? vehicle!.name : l10n.vehicleSelectionNoneAssigned,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
@@ -257,8 +264,8 @@ class _AssignedCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   hasVehicle
-                      ? '${vehicle!.category} · active shift'
-                      : 'Select an available unit',
+                      ? l10n.vehicleSelectionActiveShift(vehicle!.category)
+                      : l10n.vehicleSelectionSelectAvailable,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -358,19 +365,20 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final (label, bg, fg) = switch (status) {
       VehicleStatus.available => (
-        'Available',
+        l10n.vehicleStatusAvailable,
         AppColors.successSoft,
         AppColors.success,
       ),
       VehicleStatus.inUse => (
-        'In use',
+        l10n.vehicleStatusInUse,
         AppColors.neutralSoft,
         AppColors.textSecondary,
       ),
       VehicleStatus.maintenance => (
-        'Maintenance',
+        l10n.vehicleStatusMaintenance,
         AppColors.warningSoft,
         AppColors.warning,
       ),
@@ -424,6 +432,7 @@ class _ErrorRetry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.symmetric(vertical: 12),
@@ -437,9 +446,9 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off_rounded, size: 36, color: AppColors.error),
           const SizedBox(height: 10),
-          const Text(
-            'Failed to load vehicles',
-            style: TextStyle(
+          Text(
+            l10n.vehicleSelectionLoadError,
+            style: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
               color: AppColors.textPrimary,
@@ -447,7 +456,7 @@ class _ErrorRetry extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            error.toString(),
+            error is String ? error as String : localizedErrorMessage(context, error),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.textSecondary,
@@ -458,7 +467,7 @@ class _ErrorRetry extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: Text(l10n.commonRetry),
           ),
         ],
       ),

@@ -7,26 +7,25 @@ class SupervisorAlertsState extends Equatable {
   const SupervisorAlertsState({
     this.status = SupervisorAlertsStatus.initial,
     this.alerts = const [],
-    this.errorMessage,
+    this.error,
   });
 
   final SupervisorAlertsStatus status;
   final List<SafetyAlert> alerts;
-  final String? errorMessage;
+  final Object? error;
 
   SupervisorAlertsState copyWith({
     SupervisorAlertsStatus? status,
     List<SafetyAlert>? alerts,
-    String? errorMessage,
-    bool clearErrorMessage = false,
+    Object? error,
+    bool clearError = false,
   }) =>
       SupervisorAlertsState(
         status: status ?? this.status,
         alerts: alerts ?? this.alerts,
-        errorMessage:
-            clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+        error: clearError ? null : (error ?? this.error),
       );
 
   @override
-  List<Object?> get props => [status, alerts, errorMessage];
+  List<Object?> get props => [status, alerts, error];
 }

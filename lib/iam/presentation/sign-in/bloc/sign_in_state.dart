@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../domain/logic/sign_in_error_mapper.dart';
 
 // Using an explicit idle state (not just "loading"/"done") so the screen can
 // tell "never submitted" apart from "just succeeded" via the bloc listener's
@@ -8,22 +9,22 @@ enum SignInStatus { initial, loading, success, failure }
 class SignInState extends Equatable {
   const SignInState({
     this.status = SignInStatus.initial,
-    this.errorMessage,
+    this.errorReason,
   });
 
   final SignInStatus status;
-  final String? errorMessage;
+  final SignInErrorReason? errorReason;
 
   SignInState copyWith({
     SignInStatus? status,
-    String? errorMessage,
+    SignInErrorReason? errorReason,
     bool clearError = false,
   }) =>
       SignInState(
         status: status ?? this.status,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+        errorReason: clearError ? null : (errorReason ?? this.errorReason),
       );
 
   @override
-  List<Object?> get props => [status, errorMessage];
+  List<Object?> get props => [status, errorReason];
 }

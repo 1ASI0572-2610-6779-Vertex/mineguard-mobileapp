@@ -20,7 +20,7 @@ class SupervisorAlertsBloc
   ) async {
     emit(state.copyWith(
       status: SupervisorAlertsStatus.loading,
-      clearErrorMessage: true,
+      clearError: true,
     ));
     try {
       final alerts = await _monitoringFacade.getAlerts();
@@ -31,7 +31,7 @@ class SupervisorAlertsBloc
     } catch (e) {
       emit(state.copyWith(
         status: SupervisorAlertsStatus.error,
-        errorMessage: e.toString(),
+        error: e,
       ));
     }
   }

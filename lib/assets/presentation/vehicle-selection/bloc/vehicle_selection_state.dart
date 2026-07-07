@@ -7,7 +7,7 @@ class VehicleSelectionState extends Equatable {
   const VehicleSelectionState({
     this.status = VehicleSelectionStatus.initial,
     this.vehicles = const [],
-    this.errorMessage,
+    this.error,
     this.assigned,
     this.assigning = false,
     this.assignError,
@@ -15,27 +15,26 @@ class VehicleSelectionState extends Equatable {
 
   final VehicleSelectionStatus status;
   final List<Vehicle> vehicles;
-  final String? errorMessage;
+  final Object? error;
   final Vehicle? assigned;
   final bool assigning;
-  final String? assignError;
+  final Object? assignError;
 
   VehicleSelectionState copyWith({
     VehicleSelectionStatus? status,
     List<Vehicle>? vehicles,
-    String? errorMessage,
-    bool clearErrorMessage = false,
+    Object? error,
+    bool clearError = false,
     Vehicle? assigned,
     bool clearAssigned = false,
     bool? assigning,
-    String? assignError,
+    Object? assignError,
     bool clearAssignError = false,
   }) =>
       VehicleSelectionState(
         status: status ?? this.status,
         vehicles: vehicles ?? this.vehicles,
-        errorMessage:
-            clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+        error: clearError ? null : (error ?? this.error),
         assigned: clearAssigned ? null : (assigned ?? this.assigned),
         assigning: assigning ?? this.assigning,
         assignError:
@@ -44,5 +43,5 @@ class VehicleSelectionState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [status, vehicles, errorMessage, assigned, assigning, assignError];
+      [status, vehicles, error, assigned, assigning, assignError];
 }

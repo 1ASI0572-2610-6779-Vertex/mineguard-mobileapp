@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
-import 'package:mobile_iot/shared/domain/entities/models.dart';
+import 'package:mobile_iot/shared/domain/entities/session_user.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 
 class GreetingHeader extends StatelessWidget {
   final SessionUser user;
@@ -15,6 +16,7 @@ class GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
@@ -33,7 +35,7 @@ class GreetingHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Hola, ${user.fullName}',
+                  l10n.sharedGreeting(user.fullName),
                   style: const TextStyle(
                     color: AppColors.textOnDark,
                     fontSize: 22,
@@ -50,7 +52,7 @@ class GreetingHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'ID: ${user.workerId}',
+                      l10n.sharedWorkerIdLabel(user.workerId),
                       style: const TextStyle(
                         color: AppColors.textOnDarkMuted,
                         fontSize: 13,

@@ -1,16 +1,18 @@
 import '../../../shared/infrastructure/network/app_exception.dart';
 
-/// Maps a sign-in failure to a user-facing message.
+enum SignInErrorReason { invalidCredentials, network, unknown }
+
+/// Maps a sign-in failure to a typed reason.
 ///
-/// Pure function — no Flutter/BuildContext dependency — so it's reusable
-/// from the bloc and unit-testable in isolation.
-String mapSignInError(Object? error) {
-  if (error is UnimplementedError) return 'Feature not implemented';
+/// Pure function — no Flutter/BuildContext dependency — the presentation
+/// layer maps the reason to a localized string at render time, so this stays
+/// unit-testable in isolation and independent of the chosen locale.
+SignInErrorReason mapSignInErrorReason(Object? error) {
   if (error is UnauthorizedException || error is ClientException) {
-    return 'Incorrect ID or password';
+    return SignInErrorReason.invalidCredentials;
   }
   if (error is NetworkException) {
-    return 'No connection to the server. Check your network';
+    return SignInErrorReason.network;
   }
-  return 'Sign-in failed. Please try again';
+  return SignInErrorReason.unknown;
 }

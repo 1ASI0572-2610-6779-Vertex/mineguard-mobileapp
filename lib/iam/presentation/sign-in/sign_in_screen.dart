@@ -5,8 +5,18 @@ import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/bootstrap/presentation/operator-home/operator_home_screen.dart';
 import 'package:mobile_iot/monitoring/presentation/supervisor-alerts/supervisor_alerts_screen.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
+import '../../domain/logic/sign_in_error_mapper.dart';
 import 'bloc/bloc.dart';
+
+String _localizeSignInError(AppLocalizations l10n, SignInErrorReason reason) {
+  return switch (reason) {
+    SignInErrorReason.invalidCredentials => l10n.signInErrorInvalidCredentials,
+    SignInErrorReason.network => l10n.commonErrorNetwork,
+    SignInErrorReason.unknown => l10n.signInErrorGeneric,
+  };
+}
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -61,7 +71,9 @@ class _SignInScreenState extends State<SignInScreen> {
             current.status == SignInStatus.success,
         listener: (context, state) => _goToHome(context),
         child: Builder(
-          builder: (context) => Scaffold(
+          builder: (context) {
+            final l10n = AppLocalizations.of(context)!;
+            return Scaffold(
             backgroundColor: AppColors.backgroundMuted,
             body: SafeArea(
               child: Center(
@@ -89,10 +101,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         children: [
                           _Logo(),
                           const SizedBox(height: 28),
-                          const Center(
+                          Center(
                             child: Text(
-                              'Welcome',
-                              style: TextStyle(
+                              l10n.signInWelcome,
+                              style: const TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
@@ -100,33 +112,33 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Center(
+                          Center(
                             child: Text(
-                              'Enter your ID and password to continue',
+                              l10n.signInSubtitle,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
                               ),
                             ),
                           ),
                           const SizedBox(height: 32),
-                          const _FieldLabel('WORKER ID'),
+                          _FieldLabel(l10n.signInWorkerIdLabel),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _workerIdCtrl,
                             autocorrect: false,
                             textCapitalization: TextCapitalization.characters,
-                            decoration: const InputDecoration(
-                              hintText: 'E.g. 8492-A',
-                              prefixIcon: Icon(Icons.badge_outlined, size: 20),
+                            decoration: InputDecoration(
+                              hintText: l10n.signInWorkerIdHint,
+                              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
                             ),
                             validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Enter your ID'
+                                ? l10n.signInWorkerIdRequired
                                 : null,
                           ),
                           const SizedBox(height: 16),
-                          const _FieldLabel('PASSWORD'),
+                          _FieldLabel(l10n.signInPasswordLabel),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _passwordCtrl,
@@ -146,19 +158,22 @@ class _SignInScreenState extends State<SignInScreen> {
                               ),
                             ),
                             validator: (v) => (v == null || v.isEmpty)
-                                ? 'Enter your password'
+                                ? l10n.signInPasswordRequired
                                 : null,
                           ),
                           BlocBuilder<SignInBloc, SignInState>(
                             builder: (context, state) {
                               if (state.status != SignInStatus.failure ||
-                                  state.errorMessage == null) {
+                                  state.errorReason == null) {
                                 return const SizedBox.shrink();
                               }
                               return Column(
                                 children: [
                                   const SizedBox(height: 14),
-                                  _ErrorBanner(message: state.errorMessage!),
+                                  _ErrorBanner(
+                                    message: _localizeSignInError(
+                                        l10n, state.errorReason!),
+                                  ),
                                 ],
                               );
                             },
@@ -180,13 +195,13 @@ class _SignInScreenState extends State<SignInScreen> {
                                           strokeWidth: 2.4,
                                         ),
                                       )
-                                    : const Row(
+                                    : Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          Text('Sign In'),
-                                          SizedBox(width: 8),
-                                          Icon(Icons.arrow_forward, size: 18),
+                                          Text(l10n.signInSubmitButton),
+                                          const SizedBox(width: 8),
+                                          const Icon(Icons.arrow_forward, size: 18),
                                         ],
                                       ),
                               );
@@ -199,7 +214,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
             ),
-          ),
+          );
+          },
         ),
       ),
     );

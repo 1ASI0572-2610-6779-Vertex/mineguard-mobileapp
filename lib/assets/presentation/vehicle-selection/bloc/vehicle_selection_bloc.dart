@@ -25,7 +25,7 @@ class VehicleSelectionBloc
   ) async {
     emit(state.copyWith(
       status: VehicleSelectionStatus.loading,
-      clearErrorMessage: true,
+      clearError: true,
     ));
     try {
       final vehicles = await _assetsFacade.getVehicles();
@@ -36,7 +36,7 @@ class VehicleSelectionBloc
     } catch (e) {
       emit(state.copyWith(
         status: VehicleSelectionStatus.error,
-        errorMessage: e.toString(),
+        error: e,
       ));
     }
   }
@@ -59,7 +59,7 @@ class VehicleSelectionBloc
       }
       emit(state.copyWith(assigned: event.vehicle, assigning: false));
     } catch (e) {
-      emit(state.copyWith(assigning: false, assignError: e.toString()));
+      emit(state.copyWith(assigning: false, assignError: e));
     }
   }
 }

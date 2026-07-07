@@ -1,0 +1,115 @@
+{
+  "@@locale": "en",
+
+  "commonRetry": "Retry",
+  "commonCancel": "Cancel",
+  "commonSignOutButton": "Sign Out",
+  "commonSignOutTitle": "Sign out",
+  "commonSignOutConfirmMessage": "Are you sure you want to sign out of your account?",
+  "commonErrorNetwork": "No internet connection. Check your network.",
+  "commonErrorUnauthorized": "Session expired. Please sign in again.",
+  "commonUnknownError": "Unknown error",
+  "commonLanguageEnglish": "English",
+  "commonLanguageSpanish": "Spanish",
+
+  "signInWelcome": "Welcome",
+  "signInSubtitle": "Enter your ID and password to continue",
+  "signInWorkerIdLabel": "WORKER ID",
+  "signInWorkerIdHint": "E.g. 8492-A",
+  "signInWorkerIdRequired": "Enter your ID",
+  "signInPasswordLabel": "PASSWORD",
+  "signInPasswordRequired": "Enter your password",
+  "signInSubmitButton": "Sign In",
+  "signInErrorInvalidCredentials": "Incorrect ID or password",
+  "signInErrorGeneric": "Sign-in failed. Please try again",
+
+  "vehicleSelectionTitle": "Vehicle Selection",
+  "vehicleSelectionSubtitle": "Select the unit assigned for today's shift",
+  "vehicleSelectionSearchHint": "Search by vehicle",
+  "vehicleSelectionEmpty": "No vehicles found.",
+  "vehicleSelectionNoneAssigned": "No vehicle assigned",
+  "vehicleSelectionSelectAvailable": "Select an available unit",
+  "vehicleSelectionActiveShift": "{category} · active shift",
+  "@vehicleSelectionActiveShift": {
+    "placeholders": {
+      "category": { "type": "String" }
+    }
+  },
+  "vehicleSelectionShiftStarted": "Shift started: {vehicleName}",
+  "@vehicleSelectionShiftStarted": {
+    "placeholders": {
+      "vehicleName": { "type": "String" }
+    }
+  },
+  "vehicleStatusAvailable": "Available",
+  "vehicleStatusInUse": "In use",
+  "vehicleStatusMaintenance": "Maintenance",
+  "vehicleSelectionLoadError": "Failed to load vehicles",
+
+  "supervisorAlertsSectionHeader": "TODAY · RECENT",
+  "supervisorAlertsEmpty": "No pending alerts",
+  "supervisorAlertsMarkedReviewed": "\"{alertTitle}\" marked as reviewed",
+  "@supervisorAlertsMarkedReviewed": {
+    "placeholders": {
+      "alertTitle": { "type": "String" }
+    }
+  },
+  "supervisorAlertsLoadError": "Failed to load alerts",
+
+  "performanceTitle": "Your performance",
+  "performanceSubtitle": "Score and metrics for your current shift",
+  "performanceSafetyScoreLabel": "SAFETY SCORE",
+  "performanceSafetyScoreDelta": "+{delta} pts this week",
+  "@performanceSafetyScoreDelta": {
+    "placeholders": {
+      "delta": { "type": "int" }
+    }
+  },
+  "performanceFatigueAlertsLabel": "FATIGUE ALERTS",
+  "performanceFatigueAlertsFooter": "Last 7 days",
+  "performanceHoursDrivenTitle": "Hours driven",
+  "performanceHoursLimitSubtitle": "Limit: 8 hours daily",
+  "performanceHoursValue": "{hours} h",
+  "@performanceHoursValue": {
+    "placeholders": {
+      "hours": { "type": "double" }
+    }
+  },
+  "performanceHoursOfLimit": "of {limit} h",
+  "@performanceHoursOfLimit": {
+    "placeholders": {
+      "limit": { "type": "double" }
+    }
+  },
+  "performanceProgressLabel": "SHIFT PROGRESS",
+  "performanceLoadError": "Could not load performance data",
+  "performanceErrorNoDriverId": "No driver ID associated with this user",
+
+  "settingsTitle": "Settings",
+  "settingsUpdatePassword": "Update password",
+  "settingsZoneManual": "Zone manual",
+  "settingsNotImplemented": "Not implemented yet",
+  "settingsZoneManualIntro": "Quick reference for mining operations:",
+  "settingsZoneSafe": "🟢 Safe zone: area cleared for normal traffic.",
+  "settingsZoneRisk": "🟡 Risk zone: area requiring caution and monitoring.",
+  "settingsZoneRestricted": "🔴 Restricted zone: critical area, not authorized for operators.",
+  "settingsGotIt": "Got it",
+  "settingsLanguageLabel": "Language",
+
+  "bootstrapNavHome": "Home",
+  "bootstrapNavPerformance": "Performance",
+  "bootstrapNavProfile": "Profile",
+
+  "sharedGreeting": "Hi, {userName}",
+  "@sharedGreeting": {
+    "placeholders": {
+      "userName": { "type": "String" }
+    }
+  },
+  "sharedWorkerIdLabel": "ID: {workerId}",
+  "@sharedWorkerIdLabel": {
+    "placeholders": {
+      "workerId": { "type": "String" }
+    }
+  }
+}

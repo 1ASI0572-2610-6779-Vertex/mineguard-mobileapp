@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
+import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
+import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
 import '../../domain/entities/performance_stats.dart';
 import 'bloc/bloc.dart';
@@ -32,6 +34,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<SessionCubit>().state;
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocProvider<PerformanceBloc>.value(
       value: _bloc,
@@ -42,18 +45,18 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text(
-                  'Your performance',
-                  style: TextStyle(
+                Text(
+                  l10n.performanceTitle,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Score and metrics for your current shift',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                Text(
+                  l10n.performanceSubtitle,
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 BlocBuilder<PerformanceBloc, PerformanceState>(
@@ -64,7 +67,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                         return const _PerformanceSkeleton();
                       case PerformanceStatus.error:
                         return _ErrorRetry(
-                          error: state.errorMessage ?? 'Unknown error',
+                          error: state.error ?? l10n.commonUnknownError,
                           onRetry: () =>
                               _bloc.add(const FetchPerformanceEvent()),
                         );
@@ -89,6 +92,7 @@ class _PerformanceContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         _AnimatedCard(
@@ -99,19 +103,19 @@ class _PerformanceContent extends StatelessWidget {
               children: [
                 Expanded(
                   child: _StatTile(
-                    label: 'SAFETY SCORE',
+                    label: l10n.performanceSafetyScoreLabel,
                     value: '${stats.safetyScore}',
                     suffix: '/100',
-                    footer: '+${stats.safetyScoreDelta} pts this week',
+                    footer: l10n.performanceSafetyScoreDelta(stats.safetyScoreDelta),
                     footerColor: AppColors.success,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatTile(
-                    label: 'FATIGUE ALERTS',
+                    label: l10n.performanceFatigueAlertsLabel,
                     value: '${stats.fatigueAlerts}',
-                    footer: 'Last 7 days',
+                    footer: l10n.performanceFatigueAlertsFooter,
                     footerColor: AppColors.textMuted,
                   ),
                 ),
@@ -147,21 +151,21 @@ class _PerformanceContent extends StatelessWidget {
                   child: const Icon(Icons.schedule, color: AppColors.warning),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hours driven',
-                        style: TextStyle(
+                        l10n.performanceHoursDrivenTitle,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
-                        'Limit: 8 hours daily',
-                        style: TextStyle(
+                        l10n.performanceHoursLimitSubtitle,
+                        style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 12,
                         ),
@@ -173,7 +177,7 @@ class _PerformanceContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${stats.drivingHours} h',
+                      l10n.performanceHoursValue(stats.drivingHours),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
@@ -181,7 +185,7 @@ class _PerformanceContent extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'of ${stats.drivingHoursLimit} h',
+                      l10n.performanceHoursOfLimit(stats.drivingHoursLimit),
                       style: const TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 11,
@@ -211,6 +215,7 @@ class _HoursProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ratio = (stats.drivingHours / stats.drivingHoursLimit).clamp(0.0, 1.0);
     final isNearLimit = ratio > 0.8;
 
@@ -233,9 +238,9 @@ class _HoursProgressBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'SHIFT PROGRESS',
-                style: TextStyle(
+              Text(
+                l10n.performanceProgressLabel,
+                style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
@@ -497,6 +502,7 @@ class _ErrorRetry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.symmetric(vertical: 12),
@@ -510,9 +516,9 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off_rounded, size: 36, color: AppColors.error),
           const SizedBox(height: 10),
-          const Text(
-            'Could not load performance data',
-            style: TextStyle(
+          Text(
+            l10n.performanceLoadError,
+            style: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
               color: AppColors.textPrimary,
@@ -520,7 +526,7 @@ class _ErrorRetry extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            error.toString(),
+            error is String ? error as String : localizedErrorMessage(context, error),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.textSecondary,
@@ -531,7 +537,7 @@ class _ErrorRetry extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: Text(l10n.commonRetry),
           ),
         ],
       ),

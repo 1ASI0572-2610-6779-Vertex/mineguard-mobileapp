@@ -34,12 +34,12 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     } on AppException catch (e) {
       emit(state.copyWith(
         status: SignInStatus.failure,
-        errorMessage: mapSignInError(e),
+        errorReason: mapSignInErrorReason(e),
       ));
     } catch (e) {
       emit(state.copyWith(
         status: SignInStatus.failure,
-        errorMessage: mapSignInError(e),
+        errorReason: mapSignInErrorReason(e),
       ));
     }
   }

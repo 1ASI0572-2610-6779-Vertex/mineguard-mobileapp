@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:mobile_iot/shared/application/locale_cubit.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
 import 'injections.dart' as di;
+import 'l10n/generated/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,9 +18,15 @@ Future<void> main() async {
     ),
   );
   await di.init();
+  // Resolved before the first frame so the app never flashes English then
+  // switches — LocaleCubit already starts at Locale('en') by default.
+  await di.serviceLocator<LocaleCubit>().loadSavedLocale();
   runApp(
-    BlocProvider.value(
-      value: di.serviceLocator<SessionCubit>(),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: di.serviceLocator<SessionCubit>()),
+        BlocProvider.value(value: di.serviceLocator<LocaleCubit>()),
+      ],
       child: const MobileIotApp(),
     ),
   );
@@ -29,11 +37,16 @@ class MobileIotApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mobile IoT',
-      debugShowCheckedModeBanner: false,
-      theme: _buildTheme(),
-      home: const SignInScreen(),
+    return BlocBuilder<LocaleCubit, Locale>(
+      builder: (context, locale) => MaterialApp(
+        title: 'Mobile IoT',
+        debugShowCheckedModeBanner: false,
+        theme: _buildTheme(),
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const SignInScreen(),
+      ),
     );
   }
 

@@ -7,26 +7,25 @@ class PerformanceState extends Equatable {
   const PerformanceState({
     this.status = PerformanceStatus.initial,
     this.stats,
-    this.errorMessage,
+    this.error,
   });
 
   final PerformanceStatus status;
   final PerformanceStats? stats;
-  final String? errorMessage;
+  final Object? error;
 
   PerformanceState copyWith({
     PerformanceStatus? status,
     PerformanceStats? stats,
-    String? errorMessage,
-    bool clearErrorMessage = false,
+    Object? error,
+    bool clearError = false,
   }) =>
       PerformanceState(
         status: status ?? this.status,
         stats: stats ?? this.stats,
-        errorMessage:
-            clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+        error: clearError ? null : (error ?? this.error),
       );
 
   @override
-  List<Object?> get props => [status, stats, errorMessage];
+  List<Object?> get props => [status, stats, error];
 }

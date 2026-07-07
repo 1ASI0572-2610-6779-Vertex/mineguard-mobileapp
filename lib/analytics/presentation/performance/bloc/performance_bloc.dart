@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../shared/application/session_cubit.dart';
+import '../../../../shared/infrastructure/network/app_exception.dart';
 import '../../../application/analytics_facade_service.dart';
 import '../../../domain/logic/resolve_driver_id.dart';
 import 'bloc.dart';
@@ -24,13 +25,13 @@ class PerformanceBloc extends Bloc<PerformanceEvent, PerformanceState> {
   ) async {
     emit(state.copyWith(
       status: PerformanceStatus.loading,
-      clearErrorMessage: true,
+      clearError: true,
     ));
     final driverId = resolveDriverIdOrNull(_sessionCubit.state);
     if (driverId == null) {
       emit(state.copyWith(
         status: PerformanceStatus.error,
-        errorMessage: 'No driver ID associated with this user',
+        error: const NoDriverIdException(),
       ));
       return;
     }
@@ -40,7 +41,7 @@ class PerformanceBloc extends Bloc<PerformanceEvent, PerformanceState> {
     } catch (e) {
       emit(state.copyWith(
         status: PerformanceStatus.error,
-        errorMessage: e.toString(),
+        error: e,
       ));
     }
   }
