@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
-import 'package:mobile_iot/shared/domain/entities/models.dart';
-import 'package:mobile_iot/shared/api/session_provider.dart';
-import 'package:mobile_iot/analytics/presentation/performance/performance_view.dart';
-import 'package:mobile_iot/profile/presentation/settings/settings_view.dart';
-import 'package:mobile_iot/assets/presentation/vehicle-selection/vehicle_selection_view.dart';
+import 'package:mobile_iot/shared/domain/entities/session_user.dart';
+import 'package:mobile_iot/shared/application/session_cubit.dart';
+import 'package:mobile_iot/analytics/presentation/performance/performance_screen.dart';
+import 'package:mobile_iot/profile/presentation/settings/settings_screen.dart';
+import 'package:mobile_iot/assets/presentation/vehicle-selection/vehicle_selection_screen.dart';
 
-class OperatorHomeView extends ConsumerStatefulWidget {
+class OperatorHomeScreen extends StatefulWidget {
   final SessionUser user;
-  const OperatorHomeView({super.key, required this.user});
+  const OperatorHomeScreen({super.key, required this.user});
 
   @override
-  ConsumerState<OperatorHomeView> createState() => _OperatorHomeViewState();
+  State<OperatorHomeScreen> createState() => _OperatorHomeScreenState();
 }
 
-class _OperatorHomeViewState extends ConsumerState<OperatorHomeView> {
+class _OperatorHomeScreenState extends State<OperatorHomeScreen> {
+  // Ephemeral UI-only state (which tab is selected) — not business/async
+  // state, so plain setState is the right tool, not a bloc.
   int _index = 0;
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(sessionProvider) ?? widget.user;
+    final user = context.watch<SessionCubit>().state ?? widget.user;
 
     final tabs = <Widget>[
-      const VehicleSelectionView(),
-      const PerformanceView(),
-      SettingsView(user: user),
+      const VehicleSelectionScreen(),
+      const PerformanceScreen(),
+      SettingsScreen(user: user),
     ];
 
     return Scaffold(
@@ -41,17 +43,17 @@ class _OperatorHomeViewState extends ConsumerState<OperatorHomeView> {
           NavigationDestination(
             icon: Icon(Icons.directions_car_outlined),
             selectedIcon: Icon(Icons.directions_car, color: AppColors.primary),
-            label: 'Inicio',
+            label: 'Home',
           ),
           NavigationDestination(
             icon: Icon(Icons.show_chart_outlined),
             selectedIcon: Icon(Icons.show_chart, color: AppColors.primary),
-            label: 'Desempeño',
+            label: 'Performance',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person, color: AppColors.primary),
-            label: 'Perfil',
+            label: 'Profile',
           ),
         ],
       ),

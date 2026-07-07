@@ -1,27 +1,27 @@
 import 'package:dio/dio.dart';
 import '../models/sign_in_response_dto.dart';
 
-/// Data Source encargado de comunicarse con el API de autenticación.
+/// Data source responsible for talking to the authentication API.
 class AuthRemoteDataSource {
 
-  /// Cliente HTTP utilizado para realizar las peticiones.
+  /// HTTP client used to perform requests.
   const AuthRemoteDataSource(this._dio);
 
   final Dio _dio;
 
-  /// Inicia sesión enviando las credenciales del trabajador.
+  /// Signs in by sending the worker's credentials.
   ///
-  /// [workerId] : Identificador del trabajador.
-  /// [password] : Contraseña del usuario.
+  /// [workerId] : the worker's identifier.
+  /// [password] : the user's password.
   ///
-  /// Retorna un objeto [SignInResponseDto] con la información
-  /// devuelta por el servidor (token, datos del usuario, etc.).
+  /// Returns a [SignInResponseDto] with the data returned by the server
+  /// (token, user info, etc.).
   Future<SignInResponseDto> signIn({
     required String workerId,
     required String password,
   }) async {
 
-    // Realiza una petición POST al endpoint de login móvil.
+    // POST to the mobile login endpoint.
     final response = await _dio.post<Map<String, dynamic>>(
       '/mobile-sessions',
       data: {
@@ -30,7 +30,7 @@ class AuthRemoteDataSource {
       },
     );
 
-    // Convierte la respuesta JSON en un DTO y lo retorna.
+    // Parse the JSON response into a DTO and return it.
     return SignInResponseDto.fromJson(response.data!);
   }
 }

@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../../../shared/domain/entities/session_user.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
 /// Contract the application layer talks to.

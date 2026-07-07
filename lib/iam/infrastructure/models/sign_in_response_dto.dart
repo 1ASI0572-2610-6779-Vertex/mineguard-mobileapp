@@ -1,8 +1,7 @@
-import '../../../shared/domain/entities/models.dart';
+import '../../../shared/domain/entities/session_user.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
-/// DTO que representa la respuesta recibida desde el API
-/// después de un inicio de sesión exitoso.
+/// DTO representing the API response after a successful sign-in.
 class SignInResponseDto {
   const SignInResponseDto({
     required this.workerId,
@@ -12,25 +11,24 @@ class SignInResponseDto {
     this.driverId,
   });
 
-  /// Identificador del trabajador.
+  /// The worker's identifier.
   final String workerId;
 
-  /// Nombre completo del usuario autenticado.
+  /// The authenticated user's full name.
   final String fullName;
 
-  /// Rol asignado al usuario (operator, supervisor, etc.).
+  /// The role assigned to the user (operator, supervisor, etc.).
   final String role;
 
-  /// Token JWT utilizado para las solicitudes autenticadas.
+  /// The JWT token used for authenticated requests.
   final String token;
 
-  /// Identificador del conductor asociado (opcional).
+  /// The associated driver identifier (optional).
   final int? driverId;
 
-  /// Construye el DTO a partir de la respuesta JSON del API.
+  /// Builds the DTO from the API's JSON response.
   ///
-  /// Lanza una [ParseException] si la estructura de la respuesta
-  /// no coincide con la esperada.
+  /// Throws a [ParseException] if the response shape doesn't match.
   factory SignInResponseDto.fromJson(Map<String, dynamic> json) {
     try {
       return SignInResponseDto(
@@ -45,10 +43,9 @@ class SignInResponseDto {
     }
   }
 
-  /// Convierte el DTO en una entidad de dominio [SessionUser].
+  /// Converts the DTO into a [SessionUser] domain entity.
   ///
-  /// Realiza también la conversión del rol recibido desde el API
-  /// al enum correspondiente de la aplicación.
+  /// Also maps the role string from the API to the application's enum.
   SessionUser toDomain() => SessionUser(
     workerId: workerId,
     fullName: fullName,

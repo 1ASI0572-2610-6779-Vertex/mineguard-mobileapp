@@ -1,11 +1,11 @@
-import '../../../shared/domain/entities/models.dart';
+import '../../domain/entities/performance_stats.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
-/// DTO de lectura para el desempeño del conductor.
+/// Read DTO for a driver's performance.
 ///
-/// No realiza transformaciones de negocio: los nombres y tipos de campos se
-/// alinean directamente con el contrato del API y luego se mapean al modelo de
-/// dominio `PerformanceStats`.
+/// Performs no business transformation: field names and types map directly
+/// to the API contract, then get converted to the `PerformanceStats` domain
+/// model.
 class PerformanceDto {
   const PerformanceDto({
     required this.safetyScore,
@@ -21,11 +21,10 @@ class PerformanceDto {
   final double drivingHours;
   final double drivingHoursLimit;
 
-  /// Construye el DTO a partir del JSON del backend.
+  /// Builds the DTO from the backend's JSON response.
   ///
-  /// Se acepta que algunos entornos serialicen horas como `int`; por eso se
-  /// normalizan a `double`. Si la estructura no coincide, se lanza
-  /// `ParseException`.
+  /// Some environments serialize hours as `int`, so they're normalized to
+  /// `double`. Throws [ParseException] if the shape doesn't match.
   factory PerformanceDto.fromJson(Map<String, dynamic> json) {
     try {
       return PerformanceDto(
@@ -41,7 +40,7 @@ class PerformanceDto {
     }
   }
 
-  /// Convierte el DTO a la entidad de dominio utilizada por la UI.
+  /// Converts the DTO into the domain entity consumed by the UI.
   PerformanceStats toDomain() => PerformanceStats(
         safetyScore: safetyScore,
         safetyScoreDelta: safetyScoreDelta,

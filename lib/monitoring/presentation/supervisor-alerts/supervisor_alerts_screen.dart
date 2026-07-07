@@ -1,108 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
-import 'package:mobile_iot/shared/api/session_provider.dart';
-import 'package:mobile_iot/shared/domain/entities/models.dart';
+import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
-import 'package:mobile_iot/iam/api/iam_providers.dart';
-import 'package:mobile_iot/iam/presentation/sign-in/sign_in_view.dart';
-import 'alerts_controller.dart';
+import 'package:mobile_iot/iam/api/iam_api.dart';
+import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
+import '../../../injections.dart';
+import '../../domain/entities/safety_alert.dart';
+import 'bloc/bloc.dart';
 
-class SupervisorAlertsView extends ConsumerWidget {
-  const SupervisorAlertsView({super.key});
+class SupervisorAlertsScreen extends StatelessWidget {
+  const SupervisorAlertsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(sessionProvider);
-    final alertsAsync = ref.watch(alertsControllerProvider);
+  Widget build(BuildContext context) {
+    return BlocProvider<SupervisorAlertsBloc>(
+      create: (_) =>
+          serviceLocator<SupervisorAlertsBloc>()..add(const FetchAlertsEvent()),
+      child: Builder(
+        builder: (context) {
+          final user = context.watch<SessionCubit>().state;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundMuted,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                if (user != null)
-                  GreetingHeader(
-                    user: user,
-                    background: AppColors.supervisorAccent,
+          return Scaffold(
+            backgroundColor: AppColors.backgroundMuted,
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      if (user != null)
+                        GreetingHeader(
+                          user: user,
+                          background: AppColors.supervisorAccent,
+                        ),
+                      Positioned(
+                        top: 16,
+                        right: 12,
+                        child: IconButton(
+                          icon: const Icon(Icons.logout,
+                              color: AppColors.textOnDark),
+                          tooltip: 'Sign out',
+                          onPressed: () => _logout(context),
+                        ),
+                      ),
+                    ],
                   ),
-                Positioned(
-                  top: 16,
-                  right: 12,
-                  child: IconButton(
-                    icon: const Icon(Icons.logout, color: AppColors.textOnDark),
-                    tooltip: 'Cerrar sesión',
-                    onPressed: () => _logout(context, ref),
-                  ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () =>
-                    ref.read(alertsControllerProvider.notifier).refresh(),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  children: [
-                    const Text(
-                      'HOY · RECIENTES',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: AppColors.textMuted,
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async => context
+                          .read<SupervisorAlertsBloc>()
+                          .add(const FetchAlertsEvent()),
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                        children: [
+                          const Text(
+                            'TODAY · RECENT',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          BlocBuilder<SupervisorAlertsBloc,
+                              SupervisorAlertsState>(
+                            builder: (context, state) {
+                              switch (state.status) {
+                                case SupervisorAlertsStatus.initial:
+                                case SupervisorAlertsStatus.loading:
+                                  return const _AlertsSkeleton();
+                                case SupervisorAlertsStatus.error:
+                                  return _ErrorRetry(
+                                    error: state.errorMessage ??
+                                        'Unknown error',
+                                    onRetry: () => context
+                                        .read<SupervisorAlertsBloc>()
+                                        .add(const FetchAlertsEvent()),
+                                  );
+                                case SupervisorAlertsStatus.loaded:
+                                  return _AlertsList(alerts: state.alerts);
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    alertsAsync.when(
-                      loading: () => const _AlertsSkeleton(),
-                      error: (e, _) => _ErrorRetry(
-                        error: e,
-                        onRetry: () =>
-                            ref.read(alertsControllerProvider.notifier).refresh(),
-                      ),
-                      data: (alerts) => _AlertsList(alerts: alerts),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+  Future<void> _logout(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar sesión'),
-        content: const Text('¿Seguro que quieres salir de tu cuenta?'),
+        title: const Text('Sign out'),
+        content: const Text(
+            'Are you sure you want to sign out of your account?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salir'),
+            child: const Text('Sign Out'),
           ),
         ],
       ),
     );
     if (ok == true && context.mounted) {
-      await ref.read(authRepositoryProvider).signOut();
-      ref.read(sessionProvider.notifier).state = null;
-      ref.invalidate(alertsControllerProvider);
+      await IamApi().signOut();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SignInView()),
+          MaterialPageRoute(builder: (_) => const SignInScreen()),
           (_) => false,
         );
       }
@@ -110,12 +130,12 @@ class SupervisorAlertsView extends ConsumerWidget {
   }
 }
 
-class _AlertsList extends ConsumerWidget {
+class _AlertsList extends StatelessWidget {
   final List<SafetyAlert> alerts;
   const _AlertsList({required this.alerts});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     if (alerts.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(32),
@@ -136,7 +156,7 @@ class _AlertsList extends ConsumerWidget {
               Icon(Icons.check_circle_outline, size: 40, color: AppColors.success),
               SizedBox(height: 8),
               Text(
-                'Sin alertas pendientes',
+                'No pending alerts',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
@@ -158,14 +178,14 @@ class _AlertsList extends ConsumerWidget {
               child: _AlertCard(
                 alert: alerts[i],
                 onAction: (alertId) async {
-                  await ref
-                      .read(alertsControllerProvider.notifier)
-                      .markReviewed(alertId);
+                  context
+                      .read<SupervisorAlertsBloc>()
+                      .add(MarkAlertReviewedEvent(alertId));
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content:
-                            Text('"${alerts[i].title}" marcada como revisada'),
+                            Text('"${alerts[i].title}" marked as reviewed'),
                         backgroundColor: AppColors.success,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
@@ -440,7 +460,7 @@ class _ErrorRetry extends StatelessWidget {
           const Icon(Icons.cloud_off_rounded, size: 36, color: AppColors.error),
           const SizedBox(height: 10),
           const Text(
-            'Error al cargar alertas',
+            'Failed to load alerts',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
@@ -457,7 +477,7 @@ class _ErrorRetry extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Reintentar'),
+            label: const Text('Retry'),
           ),
         ],
       ),

@@ -1,70 +1,13 @@
-enum UserRole { operator, supervisor }
-
-class SessionUser {
-  final String workerId;
-  final String fullName;
-  final UserRole role;
-  final int? driverId;
-
-  const SessionUser({
-    required this.workerId,
-    required this.fullName,
-    required this.role,
-    this.driverId,
-  });
-
-  bool get isOperator => role == UserRole.operator;
-  bool get isSupervisor => role == UserRole.supervisor;
-}
-
-enum VehicleStatus { available, inUse, maintenance }
-
-class Vehicle {
-  final String id;
-  final String name;
-  final String category;
-  final VehicleStatus status;
-
-  const Vehicle({
-    required this.id,
-    required this.name,
-    required this.category,
-    required this.status,
-  });
-}
-
-class PerformanceStats {
-  final int safetyScore;
-  final int safetyScoreDelta;
-  final int fatigueAlerts;
-  final double drivingHours;
-  final double drivingHoursLimit;
-
-  const PerformanceStats({
-    required this.safetyScore,
-    required this.safetyScoreDelta,
-    required this.fatigueAlerts,
-    required this.drivingHours,
-    required this.drivingHoursLimit,
-  });
-}
-
-enum AlertKind { panic, collisionRisk, fatigue }
-
-class SafetyAlert {
-  final String id;
-  final AlertKind kind;
-  final String title;
-  final String description;
-  final String elapsedLabel;
-  final String? primaryAction;
-
-  const SafetyAlert({
-    required this.id,
-    required this.kind,
-    required this.title,
-    required this.description,
-    required this.elapsedLabel,
-    this.primaryAction,
-  });
-}
+// All entities that used to live in this single shared file have moved to
+// their owning bounded context (or, for SessionUser/UserRole, stayed a
+// shared-kernel type in session_user.dart). This file now only re-exports
+// them, so not-yet-migrated files keep compiling during the Bloc migration.
+// TODO(migration): delete once every bounded context imports entities
+// directly from their new location (step 7 cleanup).
+export 'session_user.dart' show SessionUser, UserRole;
+export '../../../assets/domain/entities/vehicle.dart'
+    show Vehicle, VehicleStatus;
+export '../../../monitoring/domain/entities/safety_alert.dart'
+    show SafetyAlert, AlertKind;
+export '../../../analytics/domain/entities/performance_stats.dart'
+    show PerformanceStats;

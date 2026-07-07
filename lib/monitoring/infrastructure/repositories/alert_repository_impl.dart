@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../shared/domain/entities/models.dart';
+import '../../domain/entities/safety_alert.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 import '../../domain/interfaces/alert_repository.dart';
 import '../data_sources/alert_remote_data_source.dart';

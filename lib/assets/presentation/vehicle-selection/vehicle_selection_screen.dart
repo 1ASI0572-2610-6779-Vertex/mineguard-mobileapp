@@ -1,23 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
-import 'package:mobile_iot/shared/api/session_provider.dart';
-import 'package:mobile_iot/shared/domain/entities/models.dart';
+import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
-import 'vehicle_selection_controller.dart';
+import '../../../injections.dart';
+import '../../domain/entities/vehicle.dart';
+import 'bloc/bloc.dart';
 
-class VehicleSelectionView extends ConsumerStatefulWidget {
-  const VehicleSelectionView({super.key});
+class VehicleSelectionScreen extends StatefulWidget {
+  const VehicleSelectionScreen({super.key});
 
   @override
-  ConsumerState<VehicleSelectionView> createState() =>
-      _VehicleSelectionViewState();
+  State<VehicleSelectionScreen> createState() => _VehicleSelectionScreenState();
 }
 
-class _VehicleSelectionViewState extends ConsumerState<VehicleSelectionView> {
+class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
+  late final VehicleSelectionBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = serviceLocator<VehicleSelectionBloc>();
+    // Guarded: this bloc is a lazy singleton (survives tab switches), so only
+    // dispatch the initial fetch the first time it's ever mounted.
+    if (_bloc.state.status == VehicleSelectionStatus.initial) {
+      _bloc.add(const FetchVehiclesEvent());
+    }
+  }
 
   @override
   void dispose() {
@@ -27,147 +39,159 @@ class _VehicleSelectionViewState extends ConsumerState<VehicleSelectionView> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(sessionProvider);
-    final ctrlState = ref.watch(vehicleSelectionControllerProvider);
+    final user = context.watch<SessionCubit>().state;
 
-    return Column(
-      children: [
-        if (user != null) GreetingHeader(user: user),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            children: [
-              const Text(
-                'Selección de Vehículo',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
+    return BlocProvider<VehicleSelectionBloc>.value(
+      value: _bloc,
+      child: BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
+        listenWhen: (previous, current) =>
+            previous.assigning && !current.assigning,
+        listener: (context, state) {
+          if (state.assignError == null && state.assigned != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Shift started: ${state.assigned!.name}'),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Selecciona la unidad asignada para tu turno de hoy',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              _AssignedCard(
-                vehicle: ctrlState.assigned,
-                assigning: ctrlState.assigning,
-              ),
-              if (ctrlState.assignError != null) ...[
-                const SizedBox(height: 8),
-                _InlineError(message: ctrlState.assignError!),
-              ],
-              const SizedBox(height: 16),
-              TextField(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
-                decoration: InputDecoration(
-                  hintText: 'Buscar por vehículo',
-                  hintStyle: const TextStyle(color: AppColors.textMuted),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    size: 20,
-                    color: AppColors.textMuted,
+            );
+          }
+        },
+        child: Column(
+          children: [
+            if (user != null) GreetingHeader(user: user),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                children: [
+                  const Text(
+                    'Vehicle Selection',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  filled: true,
-                  fillColor: AppColors.backgroundCard,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Select the unit assigned for today's shift",
+                    style:
+                        TextStyle(color: AppColors.textSecondary, fontSize: 13),
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(999),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(999),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(999),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ctrlState.vehicles.when(
-                loading: () => const _VehicleListSkeleton(),
-                error: (e, _) => _ErrorRetry(
-                  error: e,
-                  onRetry: () => ref
-                      .read(vehicleSelectionControllerProvider.notifier)
-                      .refresh(),
-                ),
-                data: (vehicles) {
-                  final filtered = vehicles.where((v) {
-                    if (_query.isEmpty) return true;
-                    final q = _query.toLowerCase();
-                    return v.name.toLowerCase().contains(q) ||
-                        v.category.toLowerCase().contains(q);
-                  }).toList();
-
-                  if (filtered.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'No encontramos vehículos.',
-                          style: TextStyle(color: AppColors.textSecondary),
+                  const SizedBox(height: 16),
+                  BlocBuilder<VehicleSelectionBloc, VehicleSelectionState>(
+                    builder: (context, state) => Column(
+                      children: [
+                        _AssignedCard(
+                          vehicle: state.assigned,
+                          assigning: state.assigning,
                         ),
+                        if (state.assignError != null) ...[
+                          const SizedBox(height: 8),
+                          _InlineError(message: state.assignError!),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v),
+                    decoration: InputDecoration(
+                      hintText: 'Search by vehicle',
+                      hintStyle: const TextStyle(color: AppColors.textMuted),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 20,
+                        color: AppColors.textMuted,
                       ),
-                    );
-                  }
+                      filled: true,
+                      fillColor: AppColors.backgroundCard,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(999),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(999),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(999),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  BlocBuilder<VehicleSelectionBloc, VehicleSelectionState>(
+                    builder: (context, state) {
+                      switch (state.status) {
+                        case VehicleSelectionStatus.initial:
+                        case VehicleSelectionStatus.loading:
+                          return const _VehicleListSkeleton();
+                        case VehicleSelectionStatus.error:
+                          return _ErrorRetry(
+                            error: state.errorMessage ?? 'Unknown error',
+                            onRetry: () => _bloc.add(const FetchVehiclesEvent()),
+                          );
+                        case VehicleSelectionStatus.loaded:
+                          final filtered = state.vehicles.where((v) {
+                            if (_query.isEmpty) return true;
+                            final q = _query.toLowerCase();
+                            return v.name.toLowerCase().contains(q) ||
+                                v.category.toLowerCase().contains(q);
+                          }).toList();
 
-                  return Column(
-                    children: [
-                      for (var i = 0; i < filtered.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _AnimatedCard(
-                            delay: i * 60,
-                            child: _VehicleTile(
-                              vehicle: filtered[i],
-                              selected:
-                                  ctrlState.assigned?.id == filtered[i].id,
-                              onTap: filtered[i].status ==
-                                          VehicleStatus.available &&
-                                      !ctrlState.assigning
-                                  ? () => _assign(filtered[i])
-                                  : null,
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
+                          if (filtered.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: Text(
+                                  'No vehicles found.',
+                                  style:
+                                      TextStyle(color: AppColors.textSecondary),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            children: [
+                              for (var i = 0; i < filtered.length; i++)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _AnimatedCard(
+                                    delay: i * 60,
+                                    child: _VehicleTile(
+                                      vehicle: filtered[i],
+                                      selected: state.assigned?.id ==
+                                          filtered[i].id,
+                                      onTap: filtered[i].status ==
+                                                  VehicleStatus.available &&
+                                              !state.assigning
+                                          ? () => _bloc.add(
+                                              AssignVehicleEvent(filtered[i]))
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                      }
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
-  }
-
-  void _assign(Vehicle v) async {
-    await ref
-        .read(vehicleSelectionControllerProvider.notifier)
-        .assignVehicle(v);
-    if (!mounted) return;
-    final error =
-        ref.read(vehicleSelectionControllerProvider).assignError;
-    if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Turno iniciado: ${v.name}'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-    }
   }
 }
 
@@ -223,7 +247,7 @@ class _AssignedCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  hasVehicle ? vehicle!.name : 'Sin vehículo asignado',
+                  hasVehicle ? vehicle!.name : 'No vehicle assigned',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
@@ -233,8 +257,8 @@ class _AssignedCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   hasVehicle
-                      ? '${vehicle!.category} · turno activo'
-                      : 'Selecciona una unidad disponible',
+                      ? '${vehicle!.category} · active shift'
+                      : 'Select an available unit',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -336,17 +360,17 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, bg, fg) = switch (status) {
       VehicleStatus.available => (
-        'Disponible',
+        'Available',
         AppColors.successSoft,
         AppColors.success,
       ),
       VehicleStatus.inUse => (
-        'En uso',
+        'In use',
         AppColors.neutralSoft,
         AppColors.textSecondary,
       ),
       VehicleStatus.maintenance => (
-        'Mantenimiento',
+        'Maintenance',
         AppColors.warningSoft,
         AppColors.warning,
       ),
@@ -414,7 +438,7 @@ class _ErrorRetry extends StatelessWidget {
           const Icon(Icons.cloud_off_rounded, size: 36, color: AppColors.error),
           const SizedBox(height: 10),
           const Text(
-            'Error al cargar vehículos',
+            'Failed to load vehicles',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
@@ -434,7 +458,7 @@ class _ErrorRetry extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Reintentar'),
+            label: const Text('Retry'),
           ),
         ],
       ),

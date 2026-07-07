@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
-import 'package:mobile_iot/iam/presentation/sign-in/sign_in_view.dart';
+import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
+import 'injections.dart' as di;
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -13,9 +15,13 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  // ProviderScope is the Riverpod root — all providers are scoped here,
-  // which enables overrides in tests without touching production code.
-  runApp(const ProviderScope(child: MobileIotApp()));
+  await di.init();
+  runApp(
+    BlocProvider.value(
+      value: di.serviceLocator<SessionCubit>(),
+      child: const MobileIotApp(),
+    ),
+  );
 }
 
 class MobileIotApp extends StatelessWidget {
@@ -27,7 +33,7 @@ class MobileIotApp extends StatelessWidget {
       title: 'Mobile IoT',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(),
-      home: const SignInView(),
+      home: const SignInScreen(),
     );
   }
 

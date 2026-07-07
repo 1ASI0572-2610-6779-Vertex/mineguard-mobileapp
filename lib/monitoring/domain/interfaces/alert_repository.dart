@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../entities/safety_alert.dart';
 
 abstract interface class AlertRepository {
   /// Fetches active alerts for the authenticated operator.
