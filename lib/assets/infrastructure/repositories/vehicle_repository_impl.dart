@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../shared/domain/entities/models.dart';
+import '../../domain/entities/vehicle.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 import '../../domain/interfaces/vehicle_repository.dart';
 import '../data_sources/vehicle_remote_data_source.dart';

@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../../domain/entities/safety_alert.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
 class AlertDto {

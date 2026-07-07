@@ -1,10 +1,11 @@
-import '../../../shared/domain/entities/models.dart';
+import '../entities/performance_stats.dart';
 
-/// Contrato de dominio para consultar el desempeño operativo de un conductor.
+/// Domain contract for querying a driver's operational performance.
 ///
-/// La implementación concreta puede obtener los datos desde red, caché u otra
-/// fuente, pero siempre debe devolver el modelo agregado `PerformanceStats`.
+/// The concrete implementation may fetch data from the network, cache, or
+/// another source, but must always return the aggregate `PerformanceStats`
+/// model.
 abstract interface class PerformanceRepository {
-  /// Obtiene las métricas de desempeño asociadas al conductor identificado.
+  /// Fetches the performance metrics for the given driver.
   Future<PerformanceStats> getPerformance(int driverId);
 }

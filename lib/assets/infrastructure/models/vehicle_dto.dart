@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../../domain/entities/vehicle.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
 /// A Data Transfer Object (DTO) that represents the raw vehicle data

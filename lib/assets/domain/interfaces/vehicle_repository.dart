@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../entities/vehicle.dart';
 
 /// Domain-level interface defining the contract for vehicle-related operations.
 ///
