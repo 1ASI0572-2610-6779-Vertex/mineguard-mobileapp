@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
 import 'package:mobile_iot/shared/domain/entities/models.dart';
+import 'package:mobile_iot/shared/api/session_provider.dart';
+import 'package:mobile_iot/iam/api/iam_providers.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_view.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
+import 'package:mobile_iot/assets/presentation/vehicle-selection/vehicle_selection_controller.dart';
+import 'package:mobile_iot/analytics/presentation/performance/performance_controller.dart';
 
-class SettingsView extends StatelessWidget {
+class SettingsView extends ConsumerWidget {
   final SessionUser user;
   const SettingsView({super.key, required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         GreetingHeader(user: user),
@@ -38,7 +43,7 @@ class SettingsView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               OutlinedButton.icon(
-                onPressed: () => _confirmLogout(context),
+                onPressed: () => _confirmLogout(context, ref),
                 icon: const Icon(Icons.logout, size: 18),
                 label: const Text('Cerrar Sesión'),
                 style: OutlinedButton.styleFrom(
@@ -103,7 +108,7 @@ class SettingsView extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context) async {
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -123,10 +128,19 @@ class SettingsView extends StatelessWidget {
       ),
     );
     if (ok == true && context.mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const SignInView()),
-        (_) => false,
-      );
+      await ref.read(authRepositoryProvider).signOut();
+      ref.read(sessionProvider.notifier).state = null;
+      // The ProviderScope lives for the whole app process — without this,
+      // the next driver to sign in on the same running app would still see
+      // the previous driver's assigned vehicle / performance stats.
+      ref.invalidate(vehicleSelectionControllerProvider);
+      ref.invalidate(performanceControllerProvider);
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SignInView()),
+          (_) => false,
+        );
+      }
     }
   }
 }

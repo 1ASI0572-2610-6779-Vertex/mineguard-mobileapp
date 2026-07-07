@@ -23,7 +23,7 @@ class AuthRemoteDataSource {
 
     // Realiza una petición POST al endpoint de login móvil.
     final response = await _dio.post<Map<String, dynamic>>(
-      '/sessions/mobile',
+      '/mobile-sessions',
       data: {
         'workerId': workerId,
         'password': password,

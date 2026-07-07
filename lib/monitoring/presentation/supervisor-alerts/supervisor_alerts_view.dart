@@ -99,6 +99,7 @@ class SupervisorAlertsView extends ConsumerWidget {
     if (ok == true && context.mounted) {
       await ref.read(authRepositoryProvider).signOut();
       ref.read(sessionProvider.notifier).state = null;
+      ref.invalidate(alertsControllerProvider);
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const SignInView()),
