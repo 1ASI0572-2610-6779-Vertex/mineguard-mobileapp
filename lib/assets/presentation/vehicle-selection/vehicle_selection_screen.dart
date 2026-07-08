@@ -39,6 +39,42 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
     super.dispose();
   }
 
+  void _showSnack(BuildContext context, String message, Color background) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: background,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  Future<void> _confirmEndShift(BuildContext context, Vehicle vehicle) async {
+    final l10n = AppLocalizations.of(context)!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.vehicleSelectionEndShift),
+        content: Text(l10n.vehicleSelectionEndShiftConfirm(vehicle.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.commonCancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.vehicleSelectionEndShift),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      _bloc.add(const EndShiftEvent());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<SessionCubit>().state;
@@ -46,22 +82,43 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 
     return BlocProvider<VehicleSelectionBloc>.value(
       value: _bloc,
-      child: BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
-        listenWhen: (previous, current) =>
-            previous.assigning && !current.assigning,
-        listener: (context, state) {
-          if (state.assignError == null && state.assigned != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.vehicleSelectionShiftStarted(state.assigned!.name)),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-            );
-          }
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
+            listenWhen: (previous, current) =>
+                previous.assigning && !current.assigning,
+            listener: (context, state) {
+              if (state.assignError == null && state.assigned != null) {
+                _showSnack(
+                  context,
+                  l10n.vehicleSelectionShiftStarted(state.assigned!.name),
+                  AppColors.success,
+                );
+              }
+            },
+          ),
+          BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
+            listenWhen: (previous, current) =>
+                previous.ending && !current.ending,
+            listener: (context, state) {
+              if (state.ended) {
+                _showSnack(
+                  context,
+                  l10n.vehicleSelectionShiftEnded,
+                  AppColors.success,
+                );
+                // Refresh so the just-freed vehicle shows as available again.
+                _bloc.add(const FetchVehiclesEvent());
+              } else if (state.endError != null) {
+                _showSnack(
+                  context,
+                  l10n.vehicleSelectionEndShiftError,
+                  AppColors.error,
+                );
+              }
+            },
+          ),
+        ],
         child: Column(
           children: [
             if (user != null) GreetingHeader(user: user),
@@ -90,6 +147,12 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                         _AssignedCard(
                           vehicle: state.assigned,
                           assigning: state.assigning,
+                          ending: state.ending,
+                          onEndShift:
+                              state.assigned != null && !state.ending
+                                  ? () => _confirmEndShift(
+                                      context, state.assigned!)
+                                  : null,
                         ),
                         if (state.assignError != null) ...[
                           const SizedBox(height: 8),
@@ -206,7 +269,14 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 class _AssignedCard extends StatelessWidget {
   final Vehicle? vehicle;
   final bool assigning;
-  const _AssignedCard({required this.vehicle, required this.assigning});
+  final bool ending;
+  final VoidCallback? onEndShift;
+  const _AssignedCard({
+    required this.vehicle,
+    required this.assigning,
+    this.ending = false,
+    this.onEndShift,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -271,6 +341,36 @@ class _AssignedCard extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
+                if (hasVehicle) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: ending ? null : onEndShift,
+                      icon: ending
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2.2),
+                            )
+                          : const Icon(Icons.logout, size: 18),
+                      label: Text(l10n.vehicleSelectionEndShift),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        backgroundColor: AppColors.errorSoft,
+                        side: BorderSide.none,
+                        minimumSize: const Size.fromHeight(46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
     );

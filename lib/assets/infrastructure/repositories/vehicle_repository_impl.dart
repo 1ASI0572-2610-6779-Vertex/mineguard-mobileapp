@@ -20,12 +20,23 @@ class VehicleRepositoryImpl implements VehicleRepository {
   }
 
   @override
-  Future<void> startTrip({
+  Future<int> startTrip({
     required String vehicleId,
     required int driverId,
   }) async {
     try {
-      await _dataSource.startTrip(vehicleId: vehicleId, driverId: driverId);
+      final session =
+          await _dataSource.startTrip(vehicleId: vehicleId, driverId: driverId);
+      return session.id;
+    } on DioException catch (e) {
+      throw e.error is AppException ? e.error as AppException : ServerException(e.message ?? '');
+    }
+  }
+
+  @override
+  Future<void> endShift(int sessionId) async {
+    try {
+      await _dataSource.endShift(sessionId);
     } on DioException catch (e) {
       throw e.error is AppException ? e.error as AppException : ServerException(e.message ?? '');
     }

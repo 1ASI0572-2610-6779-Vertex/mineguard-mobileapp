@@ -29,4 +29,21 @@ class ProfileCubit extends Cubit<ProfileState> {
     _analyticsApi.resetPerformanceState();
     emit(state.copyWith(signingOut: false));
   }
+
+  /// Changes the signed-in driver's password via `PATCH /users/me/password`.
+  /// [newPassword] must be at least 8 characters (enforced by the backend and
+  /// validated in the UI before this is called).
+  Future<void> changePassword(String newPassword) async {
+    emit(state.copyWith(
+      changingPassword: true,
+      passwordChanged: false,
+      clearPasswordError: true,
+    ));
+    try {
+      await _iamApi.changePassword(newPassword: newPassword);
+      emit(state.copyWith(changingPassword: false, passwordChanged: true));
+    } catch (e) {
+      emit(state.copyWith(changingPassword: false, passwordError: e));
+    }
+  }
 }

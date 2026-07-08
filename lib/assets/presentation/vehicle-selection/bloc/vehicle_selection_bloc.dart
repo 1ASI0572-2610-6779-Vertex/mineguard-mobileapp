@@ -14,6 +14,7 @@ class VehicleSelectionBloc
         super(const VehicleSelectionState()) {
     on<FetchVehiclesEvent>(_onFetch);
     on<AssignVehicleEvent>(_onAssign);
+    on<EndShiftEvent>(_onEndShift);
   }
 
   final AssetsFacadeService _assetsFacade;
@@ -45,21 +46,51 @@ class VehicleSelectionBloc
     AssignVehicleEvent event,
     Emitter<VehicleSelectionState> emit,
   ) async {
-    emit(state.copyWith(assigning: true, clearAssignError: true));
+    emit(state.copyWith(assigning: true, clearAssignError: true, ended: false));
     try {
-      // Preserved from the original controller: if there's no driverId on
-      // the session, the vehicle is still marked "assigned" locally without
-      // ever calling the backend. Not a bug to fix here, just to preserve.
+      // If there's no driverId on the session, the vehicle is marked
+      // "assigned" locally without opening a backend Driving Session (there's
+      // no driver aggregate to check in). With a driverId, we open the session
+      // and retain its id so the shift can later be ended.
       final driverId = _sessionCubit.state?.driverId;
+      int? sessionId;
       if (driverId != null) {
-        await _assetsFacade.startTrip(
+        sessionId = await _assetsFacade.startTrip(
           vehicleId: event.vehicle.id,
           driverId: driverId,
         );
       }
-      emit(state.copyWith(assigned: event.vehicle, assigning: false));
+      emit(state.copyWith(
+        assigned: event.vehicle,
+        assigning: false,
+        activeSessionId: sessionId,
+        clearActiveSessionId: sessionId == null,
+      ));
     } catch (e) {
       emit(state.copyWith(assigning: false, assignError: e));
+    }
+  }
+
+  Future<void> _onEndShift(
+    EndShiftEvent event,
+    Emitter<VehicleSelectionState> emit,
+  ) async {
+    emit(state.copyWith(ending: true, clearEndError: true, ended: false));
+    try {
+      // Only call the backend when a real session was opened (driverId
+      // present). A locally-only assignment is just cleared.
+      final sessionId = state.activeSessionId;
+      if (sessionId != null) {
+        await _assetsFacade.endShift(sessionId);
+      }
+      emit(state.copyWith(
+        ending: false,
+        ended: true,
+        clearAssigned: true,
+        clearActiveSessionId: true,
+      ));
+    } catch (e) {
+      emit(state.copyWith(ending: false, endError: e));
     }
   }
 }

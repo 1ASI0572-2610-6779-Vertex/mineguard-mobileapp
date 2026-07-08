@@ -41,6 +41,15 @@
       "vehicleName": { "type": "String" }
     }
   },
+  "vehicleSelectionEndShift": "End shift",
+  "vehicleSelectionEndShiftConfirm": "You will be unlinked from {vehicleName} and your driving session will be closed. Continue?",
+  "@vehicleSelectionEndShiftConfirm": {
+    "placeholders": {
+      "vehicleName": { "type": "String" }
+    }
+  },
+  "vehicleSelectionShiftEnded": "Shift ended",
+  "vehicleSelectionEndShiftError": "Could not end shift. Please try again.",
   "vehicleStatusAvailable": "Available",
   "vehicleStatusInUse": "In use",
   "vehicleStatusMaintenance": "Maintenance",
@@ -55,6 +64,7 @@
     }
   },
   "supervisorAlertsLoadError": "Failed to load alerts",
+  "supervisorAlertsMarkReviewed": "Mark as reviewed",
 
   "performanceTitle": "Your performance",
   "performanceSubtitle": "Score and metrics for your current shift",
@@ -87,6 +97,10 @@
 
   "settingsTitle": "Settings",
   "settingsUpdatePassword": "Update password",
+  "settingsNewPasswordLabel": "New password",
+  "settingsPasswordMinLength": "Minimum 8 characters",
+  "settingsChangePasswordSubmit": "Update",
+  "settingsPasswordChanged": "Password updated successfully",
   "settingsZoneManual": "Zone manual",
   "settingsNotImplemented": "Not implemented yet",
   "settingsZoneManualIntro": "Quick reference for mining operations:",

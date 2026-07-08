@@ -8,4 +8,7 @@ class IamApi {
   final IamFacadeService _facade = serviceLocator<IamFacadeService>();
 
   Future<void> signOut() => _facade.signOut();
+
+  Future<void> changePassword({required String newPassword}) =>
+      _facade.changePassword(newPassword: newPassword);
 }

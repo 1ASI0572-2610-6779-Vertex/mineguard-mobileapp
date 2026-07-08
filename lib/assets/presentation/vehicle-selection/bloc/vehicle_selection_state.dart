@@ -11,6 +11,10 @@ class VehicleSelectionState extends Equatable {
     this.assigned,
     this.assigning = false,
     this.assignError,
+    this.activeSessionId,
+    this.ending = false,
+    this.endError,
+    this.ended = false,
   });
 
   final VehicleSelectionStatus status;
@@ -19,6 +23,17 @@ class VehicleSelectionState extends Equatable {
   final Vehicle? assigned;
   final bool assigning;
   final Object? assignError;
+
+  /// The Driving Session id opened at check-in, retained so the shift can be
+  /// ended (check-out). Null when no backend session is active (e.g. a session
+  /// with no `driverId`, which is assigned locally only).
+  final int? activeSessionId;
+  final bool ending;
+  final Object? endError;
+
+  /// Set true for one emission right after a successful check-out so the UI
+  /// can confirm the shift ended.
+  final bool ended;
 
   VehicleSelectionState copyWith({
     VehicleSelectionStatus? status,
@@ -30,6 +45,12 @@ class VehicleSelectionState extends Equatable {
     bool? assigning,
     Object? assignError,
     bool clearAssignError = false,
+    int? activeSessionId,
+    bool clearActiveSessionId = false,
+    bool? ending,
+    Object? endError,
+    bool clearEndError = false,
+    bool? ended,
   }) =>
       VehicleSelectionState(
         status: status ?? this.status,
@@ -39,9 +60,25 @@ class VehicleSelectionState extends Equatable {
         assigning: assigning ?? this.assigning,
         assignError:
             clearAssignError ? null : (assignError ?? this.assignError),
+        activeSessionId: clearActiveSessionId
+            ? null
+            : (activeSessionId ?? this.activeSessionId),
+        ending: ending ?? this.ending,
+        endError: clearEndError ? null : (endError ?? this.endError),
+        ended: ended ?? this.ended,
       );
 
   @override
-  List<Object?> get props =>
-      [status, vehicles, error, assigned, assigning, assignError];
+  List<Object?> get props => [
+        status,
+        vehicles,
+        error,
+        assigned,
+        assigning,
+        assignError,
+        activeSessionId,
+        ending,
+        endError,
+        ended,
+      ];
 }

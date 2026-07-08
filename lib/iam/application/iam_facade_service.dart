@@ -25,4 +25,9 @@ class IamFacadeService {
     await repository.signOut();
     sessionCubit.clear();
   }
+
+  /// Changes the authenticated user's password. The session/token is kept —
+  /// the backend does not invalidate the current JWT on password change.
+  Future<void> changePassword({required String newPassword}) =>
+      repository.changePassword(newPassword: newPassword);
 }

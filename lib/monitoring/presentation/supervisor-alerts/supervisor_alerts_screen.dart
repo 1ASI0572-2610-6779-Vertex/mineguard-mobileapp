@@ -296,11 +296,10 @@ class _AlertCard extends StatelessWidget {
               ),
             ),
           ),
-          if (alert.primaryAction != null) ...[
+          if (!alert.resolved) ...[
             const SizedBox(height: 14),
             _ActionButton(
-              kind: alert.kind,
-              label: alert.primaryAction!,
+              label: AppLocalizations.of(context)!.supervisorAlertsMarkReviewed,
               onTap: () => onAction(alert.id),
             ),
           ],
@@ -311,31 +310,16 @@ class _AlertCard extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  final AlertKind kind;
   final String label;
   final VoidCallback onTap;
-  const _ActionButton({required this.kind, required this.label, required this.onTap});
+  const _ActionButton({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    if (kind == AlertKind.panic) {
-      return ElevatedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.phone, size: 16),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.textPrimary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(44),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-        ),
-      );
-    }
-    return OutlinedButton(
+    return OutlinedButton.icon(
       onPressed: onTap,
+      icon: const Icon(Icons.check_circle_outline, size: 16),
+      label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.textPrimary,
         backgroundColor: AppColors.backgroundMuted,
@@ -344,7 +328,6 @@ class _ActionButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
       ),
-      child: Text(label),
     );
   }
 }

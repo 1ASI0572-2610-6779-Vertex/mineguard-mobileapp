@@ -20,3 +20,8 @@ class AssignVehicleEvent extends VehicleSelectionEvent {
   @override
   List<Object?> get props => [vehicle];
 }
+
+/// Ends the current shift: checks the driver out of the assigned vehicle.
+class EndShiftEvent extends VehicleSelectionEvent {
+  const EndShiftEvent();
+}
