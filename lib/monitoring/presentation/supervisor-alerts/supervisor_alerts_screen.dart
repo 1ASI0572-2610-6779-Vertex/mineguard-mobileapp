@@ -1,69 +1,144 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
+import 'package:mobile_iot/shared/config/app_theme.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
 import 'package:mobile_iot/shared/widgets/language_toggle.dart';
+import 'package:mobile_iot/shared/widgets/app_feedback.dart';
 import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
 import 'package:mobile_iot/iam/api/iam_api.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
 import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
 import '../../domain/entities/safety_alert.dart';
+import 'alert_severity.dart';
 import 'bloc/bloc.dart';
 
-class SupervisorAlertsScreen extends StatelessWidget {
+class SupervisorAlertsScreen extends StatefulWidget {
   const SupervisorAlertsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider<SupervisorAlertsBloc>(
-      create: (_) =>
-          serviceLocator<SupervisorAlertsBloc>()..add(const FetchAlertsEvent()),
-      child: Builder(
-        builder: (context) {
-          final user = context.watch<SessionCubit>().state;
-          final l10n = AppLocalizations.of(context)!;
+  State<SupervisorAlertsScreen> createState() => _SupervisorAlertsScreenState();
+}
 
-          return Scaffold(
-            backgroundColor: AppColors.backgroundMuted,
-            body: SafeArea(
-              bottom: false,
-              child: Column(
+class _SupervisorAlertsScreenState extends State<SupervisorAlertsScreen> {
+  static const _pollInterval = Duration(seconds: 20);
+
+  late final SupervisorAlertsBloc _bloc;
+  Timer? _pollTimer;
+
+  // Alert IDs already surfaced to the supervisor. Accumulates and never
+  // shrinks, so a reviewed/removed alert can never re-toast.
+  final Set<String> _seenAlertIds = {};
+  // The first successful load establishes the baseline (existing backlog) and
+  // must not toast — only alerts arriving afterwards are "new".
+  bool _primed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = serviceLocator<SupervisorAlertsBloc>()
+      ..add(const FetchAlertsEvent());
+    // Silent background poll so backend alerts surface automatically without a
+    // skeleton flicker; the listener below turns new ones into toasts.
+    _pollTimer = Timer.periodic(
+      _pollInterval,
+      (_) => _bloc.add(const RefreshAlertsSilentlyEvent()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _bloc.close();
+    super.dispose();
+  }
+
+  /// Reacts to every state change; fires a severity-mapped toast for the most
+  /// urgent newly-arrived alert. Guarded so it only fires while this screen is
+  /// the active route (e.g. not while the logout dialog is open), so the
+  /// supervisor is never saturated while doing something else.
+  void _onAlertsChanged(BuildContext context, SupervisorAlertsState state) {
+    if (state.status != SupervisorAlertsStatus.loaded) return;
+    final incoming = state.alerts;
+
+    if (!_primed) {
+      _seenAlertIds.addAll(incoming.map((a) => a.id));
+      _primed = true;
+      return;
+    }
+
+    final fresh = incoming.where((a) => !_seenAlertIds.contains(a.id)).toList();
+    _seenAlertIds.addAll(incoming.map((a) => a.id));
+    if (fresh.isEmpty) return;
+
+    final route = ModalRoute.of(context);
+    if (!mounted || (route != null && !route.isCurrent)) return;
+
+    // One toast per batch (the most severe) to communicate urgency without
+    // spamming when several alerts land at once.
+    final top = fresh.reduce((a, b) => _rank(a.kind) >= _rank(b.kind) ? a : b);
+    AppSnack.show(context, top.title, alertSeverity(top.kind));
+  }
+
+  int _rank(AlertKind kind) => switch (kind) {
+    AlertKind.panic || AlertKind.collisionRisk => 2,
+    AlertKind.fatigue => 1,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<SupervisorAlertsBloc>.value(
+      value: _bloc,
+      child: BlocListener<SupervisorAlertsBloc, SupervisorAlertsState>(
+        listener: _onAlertsChanged,
+        child: Builder(
+          builder: (context) {
+            final user = context.watch<SessionCubit>().state;
+            final l10n = AppLocalizations.of(context)!;
+
+            return Scaffold(
+              backgroundColor: AppColors.backgroundMuted,
+              // No SafeArea: GreetingHeader renders behind the status bar and
+              // insets its own content; the list adds the bottom inset below.
+              body: Column(
                 children: [
-                  Stack(
-                    children: [
-                      if (user != null)
-                        GreetingHeader(
-                          user: user,
-                          background: AppColors.supervisorAccent,
-                        ),
-                      Positioned(
-                        top: 16,
-                        right: 12,
-                        child: Row(
-                          children: [
-                            const LanguageToggle(),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.logout,
-                                  color: AppColors.textOnDark),
-                              tooltip: l10n.commonSignOutTitle,
-                              onPressed: () => _logout(context),
+                  if (user != null)
+                    GreetingHeader(
+                      user: user,
+                      gradient: AppGradients.supervisorHeader,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const LanguageToggle(),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.logout,
+                              color: AppColors.textOnDark,
                             ),
-                          ],
-                        ),
+                            tooltip: l10n.commonSignOutTitle,
+                            onPressed: () => _logout(context),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async => context
                           .read<SupervisorAlertsBloc>()
                           .add(const FetchAlertsEvent()),
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          20,
+                          20,
+                          24 + MediaQuery.of(context).padding.bottom,
+                        ),
                         children: [
                           Text(
                             l10n.supervisorAlertsSectionHeader,
@@ -75,8 +150,10 @@ class SupervisorAlertsScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          BlocBuilder<SupervisorAlertsBloc,
-                              SupervisorAlertsState>(
+                          BlocBuilder<
+                            SupervisorAlertsBloc,
+                            SupervisorAlertsState
+                          >(
                             builder: (context, state) {
                               switch (state.status) {
                                 case SupervisorAlertsStatus.initial:
@@ -84,7 +161,8 @@ class SupervisorAlertsScreen extends StatelessWidget {
                                   return const _AlertsSkeleton();
                                 case SupervisorAlertsStatus.error:
                                   return _ErrorRetry(
-                                    error: state.error ?? l10n.commonUnknownError,
+                                    error:
+                                        state.error ?? l10n.commonUnknownError,
                                     onRetry: () => context
                                         .read<SupervisorAlertsBloc>()
                                         .add(const FetchAlertsEvent()),
@@ -100,34 +178,25 @@ class SupervisorAlertsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 
   Future<void> _logout(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.commonSignOutTitle),
-        content: Text(l10n.commonSignOutConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.commonCancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.commonSignOutButton),
-          ),
-        ],
-      ),
+    final ok = await showPremiumConfirm(
+      context,
+      title: l10n.commonSignOutTitle,
+      message: l10n.commonSignOutConfirmMessage,
+      confirmLabel: l10n.commonSignOutButton,
+      cancelLabel: l10n.commonCancel,
+      icon: Icons.logout_rounded,
+      severity: AppSeverity.critical,
     );
-    if (ok == true && context.mounted) {
+    if (ok && context.mounted) {
       await IamApi().signOut();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -149,21 +218,15 @@ class _AlertsList extends StatelessWidget {
     if (alerts.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 16,
-            ),
-          ],
-        ),
+        decoration: AppDecorations.card(radius: 16),
         child: Center(
           child: Column(
             children: [
-              const Icon(Icons.check_circle_outline, size: 40, color: AppColors.success),
+              const Icon(
+                Icons.check_circle_outline,
+                size: 40,
+                color: AppColors.success,
+              ),
               const SizedBox(height: 8),
               Text(
                 l10n.supervisorAlertsEmpty,
@@ -188,20 +251,13 @@ class _AlertsList extends StatelessWidget {
               child: _AlertCard(
                 alert: alerts[i],
                 onAction: (alertId) async {
-                  context
-                      .read<SupervisorAlertsBloc>()
-                      .add(MarkAlertReviewedEvent(alertId));
+                  context.read<SupervisorAlertsBloc>().add(
+                    MarkAlertReviewedEvent(alertId),
+                  );
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.supervisorAlertsMarkedReviewed(
-                            alerts[i].title)),
-                        backgroundColor: AppColors.success,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                    AppSnack.success(
+                      context,
+                      l10n.supervisorAlertsMarkedReviewed(alerts[i].title),
                     );
                   }
                 },
@@ -221,11 +277,7 @@ class _AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color, soft) = switch (alert.kind) {
-      AlertKind.panic => (
-        Icons.error,
-        AppColors.error,
-        AppColors.errorSoft,
-      ),
+      AlertKind.panic => (Icons.error, AppColors.error, AppColors.errorSoft),
       AlertKind.collisionRisk => (
         Icons.warning_amber_rounded,
         AppColors.error,
@@ -240,17 +292,7 @@ class _AlertCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 16,
-          ),
-        ],
-      ),
+      decoration: AppDecorations.card(radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -408,9 +450,10 @@ class _SkeletonBoxState extends State<_SkeletonBox>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.35, end: 0.85).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.35,
+      end: 0.85,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -421,16 +464,16 @@ class _SkeletonBoxState extends State<_SkeletonBox>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _anim,
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(widget.radius),
-          ),
-        ),
-      );
+    opacity: _anim,
+    child: Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(widget.radius),
+      ),
+    ),
+  );
 }
 
 class _ErrorRetry extends StatelessWidget {
@@ -463,9 +506,14 @@ class _ErrorRetry extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            error is String ? error as String : localizedErrorMessage(context, error),
+            error is String
+                ? error as String
+                : localizedErrorMessage(context, error),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -501,9 +549,10 @@ class _AnimatedCardState extends State<_AnimatedCard>
       vsync: this,
       duration: const Duration(milliseconds: 380),
     );
-    _opacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
@@ -522,7 +571,7 @@ class _AnimatedCardState extends State<_AnimatedCard>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _opacity,
-        child: SlideTransition(position: _slide, child: widget.child),
-      );
+    opacity: _opacity,
+    child: SlideTransition(position: _slide, child: widget.child),
+  );
 }

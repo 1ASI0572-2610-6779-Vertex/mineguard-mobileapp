@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/config/app_colors.dart';
+import 'package:mobile_iot/shared/config/app_theme.dart';
 import 'package:mobile_iot/bootstrap/presentation/operator-home/operator_home_screen.dart';
 import 'package:mobile_iot/monitoring/presentation/supervisor-alerts/supervisor_alerts_screen.dart';
 import 'package:mobile_iot/l10n/generated/app_localizations.dart';
@@ -40,10 +41,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _submit(BuildContext context) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    context.read<SignInBloc>().add(SignInSubmitted(
-          workerId: _workerIdCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        ));
+    context.read<SignInBloc>().add(
+      SignInSubmitted(
+        workerId: _workerIdCtrl.text.trim(),
+        password: _passwordCtrl.text,
+      ),
+    );
   }
 
   void _goToHome(BuildContext context) {
@@ -74,147 +77,165 @@ class _SignInScreenState extends State<SignInScreen> {
           builder: (context) {
             final l10n = AppLocalizations.of(context)!;
             return Scaffold(
-            backgroundColor: AppColors.backgroundMuted,
-            body: SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundCard,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
+              backgroundColor: AppColors.backgroundMuted,
+              body: Stack(
+                children: [
+                  const _AuthBackdrop(),
+                  SafeArea(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 24,
                         ),
-                      ],
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _Logo(),
-                          const SizedBox(height: 28),
-                          Center(
-                            child: Text(
-                              l10n.signInWelcome,
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundCard,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.6),
                             ),
+                            boxShadow: AppShadows.elevated,
                           ),
-                          const SizedBox(height: 6),
-                          Center(
-                            child: Text(
-                              l10n.signInSubtitle,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          _FieldLabel(l10n.signInWorkerIdLabel),
-                          const SizedBox(height: 6),
-                          TextFormField(
-                            controller: _workerIdCtrl,
-                            autocorrect: false,
-                            textCapitalization: TextCapitalization.characters,
-                            decoration: InputDecoration(
-                              hintText: l10n.signInWorkerIdHint,
-                              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-                            ),
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? l10n.signInWorkerIdRequired
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                          _FieldLabel(l10n.signInPasswordLabel),
-                          const SizedBox(height: 6),
-                          TextFormField(
-                            controller: _passwordCtrl,
-                            obscureText: _obscure,
-                            decoration: InputDecoration(
-                              hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscure
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  size: 20,
-                                ),
-                                onPressed: () =>
-                                    setState(() => _obscure = !_obscure),
-                              ),
-                            ),
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? l10n.signInPasswordRequired
-                                : null,
-                          ),
-                          BlocBuilder<SignInBloc, SignInState>(
-                            builder: (context, state) {
-                              if (state.status != SignInStatus.failure ||
-                                  state.errorReason == null) {
-                                return const SizedBox.shrink();
-                              }
-                              return Column(
-                                children: [
-                                  const SizedBox(height: 14),
-                                  _ErrorBanner(
-                                    message: _localizeSignInError(
-                                        l10n, state.errorReason!),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _Logo(),
+                                const SizedBox(height: 28),
+                                Center(
+                                  child: Text(
+                                    l10n.signInWelcome,
+                                    style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 28),
-                          BlocBuilder<SignInBloc, SignInState>(
-                            builder: (context, state) {
-                              final isLoading =
-                                  state.status == SignInStatus.loading;
-                              return ElevatedButton(
-                                onPressed:
-                                    isLoading ? null : () => _submit(context),
-                                child: isLoading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.4,
-                                        ),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(l10n.signInSubmitButton),
-                                          const SizedBox(width: 8),
-                                          const Icon(Icons.arrow_forward, size: 18),
-                                        ],
+                                ),
+                                const SizedBox(height: 6),
+                                Center(
+                                  child: Text(
+                                    l10n.signInSubtitle,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                _FieldLabel(l10n.signInWorkerIdLabel),
+                                const SizedBox(height: 6),
+                                TextFormField(
+                                  controller: _workerIdCtrl,
+                                  autocorrect: false,
+                                  textCapitalization:
+                                      TextCapitalization.characters,
+                                  decoration: InputDecoration(
+                                    hintText: l10n.signInWorkerIdHint,
+                                    prefixIcon: const Icon(
+                                      Icons.badge_outlined,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? l10n.signInWorkerIdRequired
+                                      : null,
+                                ),
+                                const SizedBox(height: 16),
+                                _FieldLabel(l10n.signInPasswordLabel),
+                                const SizedBox(height: 6),
+                                TextFormField(
+                                  controller: _passwordCtrl,
+                                  obscureText: _obscure,
+                                  decoration: InputDecoration(
+                                    hintText: '••••••••',
+                                    prefixIcon: const Icon(
+                                      Icons.lock_outline,
+                                      size: 20,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscure
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        size: 20,
                                       ),
-                              );
-                            },
+                                      onPressed: () =>
+                                          setState(() => _obscure = !_obscure),
+                                    ),
+                                  ),
+                                  validator: (v) => (v == null || v.isEmpty)
+                                      ? l10n.signInPasswordRequired
+                                      : null,
+                                ),
+                                BlocBuilder<SignInBloc, SignInState>(
+                                  builder: (context, state) {
+                                    if (state.status != SignInStatus.failure ||
+                                        state.errorReason == null) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Column(
+                                      children: [
+                                        const SizedBox(height: 14),
+                                        _ErrorBanner(
+                                          message: _localizeSignInError(
+                                            l10n,
+                                            state.errorReason!,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 28),
+                                BlocBuilder<SignInBloc, SignInState>(
+                                  builder: (context, state) {
+                                    final isLoading =
+                                        state.status == SignInStatus.loading;
+                                    return ElevatedButton(
+                                      onPressed: isLoading
+                                          ? null
+                                          : () => _submit(context),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              width: 22,
+                                              height: 22,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2.4,
+                                              ),
+                                            )
+                                          : Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(l10n.signInSubmitButton),
+                                                const SizedBox(width: 8),
+                                                const Icon(
+                                                  Icons.arrow_forward,
+                                                  size: 18,
+                                                ),
+                                              ],
+                                            ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ),
-          );
+            );
           },
         ),
       ),
@@ -227,13 +248,76 @@ class _Logo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        width: 64,
-        height: 64,
+        width: 84,
+        height: 84,
         decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(18),
+          color: const Color(0xFF141414), // Aquí aplicamos tu color exacto
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: AppShadows.brand(opacity: 0.4), // Mantiene la sombra premium
         ),
-        child: const Icon(Icons.shield_outlined, color: Colors.white, size: 32),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Image.asset(
+              'assets/icon/logo-mineguard.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Soft branded gradient blooms behind the sign-in card — gives the screen
+/// depth without distracting from the form.
+class _AuthBackdrop extends StatelessWidget {
+  const _AuthBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: DecoratedBox(
+        decoration: const BoxDecoration(gradient: AppGradients.appBackground),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -120,
+              right: -80,
+              child: _Bloom(
+                size: 320,
+                color: AppColors.primary.withValues(alpha: 0.12),
+              ),
+            ),
+            Positioned(
+              bottom: -140,
+              left: -90,
+              child: _Bloom(
+                size: 300,
+                color: AppColors.supervisorAccent.withValues(alpha: 0.08),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Bloom extends StatelessWidget {
+  final double size;
+  final Color color;
+  const _Bloom({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }

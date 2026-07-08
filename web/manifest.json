@@ -1,6 +1,6 @@
 {
-    "name": "mobile_iot",
-    "short_name": "mobile_iot",
+    "name": "Mineguard",
+    "short_name": "Mineguard",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

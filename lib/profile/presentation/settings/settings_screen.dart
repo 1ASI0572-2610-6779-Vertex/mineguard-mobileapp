@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
+import 'package:mobile_iot/shared/config/app_theme.dart';
 import 'package:mobile_iot/shared/domain/entities/session_user.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
 import 'package:mobile_iot/shared/widgets/language_toggle.dart';
+import 'package:mobile_iot/shared/widgets/app_feedback.dart';
 import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
 import 'package:mobile_iot/iam/presentation/sign-in/sign_in_screen.dart';
 import 'package:mobile_iot/l10n/generated/app_localizations.dart';
@@ -128,25 +130,16 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _confirmLogout(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.commonSignOutTitle),
-        content: Text(l10n.commonSignOutConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.commonCancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.commonSignOutButton),
-          ),
-        ],
-      ),
+    final ok = await showPremiumConfirm(
+      context,
+      title: l10n.commonSignOutTitle,
+      message: l10n.commonSignOutConfirmMessage,
+      confirmLabel: l10n.commonSignOutButton,
+      cancelLabel: l10n.commonCancel,
+      icon: Icons.logout_rounded,
+      severity: AppSeverity.critical,
     );
-    if (ok == true && context.mounted) {
+    if (ok && context.mounted) {
       await context.read<ProfileCubit>().signOut();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -175,7 +168,8 @@ class _SettingsTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: const Color(0xFFEDEFF4)),
+            boxShadow: AppShadows.card,
           ),
           child: Row(
             children: [
@@ -235,16 +229,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
       listener: (context, state) {
         if (state.passwordChanged) {
           Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.settingsPasswordChanged),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
+          AppSnack.success(context, l10n.settingsPasswordChanged);
         }
       },
       builder: (context, state) {
@@ -299,8 +284,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
               child: Text(l10n.commonCancel),
             ),
             ElevatedButton(
-              onPressed:
-                  state.changingPassword ? null : () => _submit(context),
+              onPressed: state.changingPassword ? null : () => _submit(context),
               style: ElevatedButton.styleFrom(minimumSize: const Size(0, 44)),
               child: state.changingPassword
                   ? const SizedBox(
@@ -331,11 +315,7 @@ class _LanguageTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: AppDecorations.card(radius: 14),
       child: Row(
         children: [
           Expanded(
