@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../entities/vehicle.dart';
 
 /// Domain-level interface defining the contract for vehicle-related operations.
 ///
@@ -12,12 +12,17 @@ abstract interface class VehicleRepository {
   /// Returns a [Future] that resolves to a [List] of [Vehicle] domain entities.
   Future<List<Vehicle>> getVehicles();
 
-  /// Initiates a trip for a designated vehicle operated by a specific driver.
-  ///
-  /// This method maps directly to the "Driver Management" business requirements.
+  /// Checks the driver into a vehicle, opening a Driving Session.
   ///
   /// Parameters:
   /// - [vehicleId]: The unique identifier of the selected vehicle.
   /// - [driverId]: The unique identifier of the driver operating the vehicle.
-  Future<void> startTrip({required String vehicleId, required int driverId});
+  ///
+  /// Returns the opened session's id, retained so the shift can later be
+  /// ended via [endShift].
+  Future<int> startTrip({required String vehicleId, required int driverId});
+
+  /// Ends the shift by closing the given Driving Session (check-out),
+  /// unlinking the driver from the vehicle.
+  Future<void> endShift(int sessionId);
 }

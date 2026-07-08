@@ -19,16 +19,29 @@ dependencies:
   # Secure JWT storage using OS keychain / Android Keystore
   flutter_secure_storage: ^9.2.2
 
-  # Compile-safe dependency injection without BuildContext coupling
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
+  # State management (Bloc) and DI (get_it) — BuildContext-free, testable
+  flutter_bloc: ^9.1.1
+  equatable: ^2.1.0
+  get_it: ^9.2.1
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  riverpod_generator: ^2.6.1
-  build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/logo-mineguard.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#141414"
+  adaptive_icon_foreground: "assets/icon/logo-mineguard.png"
 
 flutter:
   uses-material-design: true
+  generate: true
+  assets:
+    - assets/icon/

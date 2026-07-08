@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../shared/domain/entities/models.dart';
+import '../../../shared/domain/entities/session_user.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 import '../../../shared/infrastructure/network/token_storage.dart';
 import '../../domain/interfaces/auth_repository.dart';
@@ -48,4 +48,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() =>
       // Removes the stored token to end the session.
   _tokenStorage.delete();
+
+  @override
+  Future<void> changePassword({required String newPassword}) async {
+    try {
+      await _dataSource.changePassword(newPassword: newPassword);
+    } on DioException catch (e) {
+      throw e.error is AppException
+          ? e.error as AppException
+          : ServerException(e.message ?? '');
+    }
+  }
 }

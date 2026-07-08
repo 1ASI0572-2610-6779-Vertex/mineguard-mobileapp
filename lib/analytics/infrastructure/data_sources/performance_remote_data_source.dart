@@ -1,19 +1,19 @@
 import 'package:dio/dio.dart';
 import '../models/performance_dto.dart';
 
-/// Fuente remota encargada de consumir el endpoint de desempeño del conductor.
+/// Remote data source that consumes the driver performance endpoint.
 ///
-/// Su única responsabilidad es ejecutar la petición HTTP y traducir la
-/// respuesta JSON en un `PerformanceDto`.
+/// Its only responsibility is to perform the HTTP request and translate the
+/// JSON response into a `PerformanceDto`.
 class PerformanceRemoteDataSource {
   const PerformanceRemoteDataSource(this._dio);
 
   final Dio _dio;
 
-  /// Obtiene el desempeño del conductor en el endpoint `/drivers/:id/performance`.
+  /// Fetches the driver's performance from `/drivers/:id/scores`.
   Future<PerformanceDto> getPerformance(int driverId) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/drivers/$driverId/performance',
+      '/drivers/$driverId/scores',
     );
     return PerformanceDto.fromJson(response.data!);
   }

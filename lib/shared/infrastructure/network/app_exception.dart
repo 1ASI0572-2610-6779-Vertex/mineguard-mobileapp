@@ -4,6 +4,9 @@
 sealed class AppException implements Exception {
   const AppException(this.message);
   final String message;
+
+  @override
+  String toString() => message;
 }
 
 /// 401 — token expired or missing. Trigger re-login flow.
@@ -30,4 +33,13 @@ final class NetworkException extends AppException {
 /// JSON shape did not match the expected model.
 final class ParseException extends AppException {
   const ParseException(super.message);
+}
+
+/// The signed-in user has no associated driverId (e.g. a non-driver role
+/// viewing a driver-only feature). Not part of the network-failure sealed
+/// hierarchy above — a client-side business-state marker, not a request
+/// failure — but kept alongside it since it's another "known" exception type
+/// the shared error localizer recognizes.
+class NoDriverIdException implements Exception {
+  const NoDriverIdException();
 }

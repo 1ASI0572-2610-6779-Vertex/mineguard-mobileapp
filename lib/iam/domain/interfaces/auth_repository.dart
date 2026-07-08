@@ -1,4 +1,4 @@
-import '../../../shared/domain/entities/models.dart';
+import '../../../shared/domain/entities/session_user.dart';
 import '../../../shared/infrastructure/network/app_exception.dart';
 
 /// Contract the application layer talks to.
@@ -14,4 +14,8 @@ abstract interface class AuthRepository {
 
   /// Removes the stored token (logout).
   Future<void> signOut();
+
+  /// Changes the authenticated user's password. Throws [AppException] on
+  /// failure (e.g. expired token, password too short).
+  Future<void> changePassword({required String newPassword});
 }
