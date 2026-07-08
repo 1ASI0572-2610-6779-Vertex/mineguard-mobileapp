@@ -33,4 +33,16 @@ class AuthRemoteDataSource {
     // Parse the JSON response into a DTO and return it.
     return SignInResponseDto.fromJson(response.data!);
   }
+
+  /// Changes the authenticated user's password.
+  ///
+  /// Maps to `PATCH /users/me/password` — the JWT (injected by the auth
+  /// interceptor) is the proof of identity, so only the new password travels
+  /// in the body. The backend enforces a minimum of 8 characters.
+  Future<void> changePassword({required String newPassword}) async {
+    await _dio.patch<void>(
+      '/users/me/password',
+      data: {'newPassword': newPassword},
+    );
+  }
 }

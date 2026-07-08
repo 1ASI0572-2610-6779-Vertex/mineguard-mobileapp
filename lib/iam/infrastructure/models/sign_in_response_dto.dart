@@ -45,11 +45,17 @@ class SignInResponseDto {
 
   /// Converts the DTO into a [SessionUser] domain entity.
   ///
-  /// Also maps the role string from the API to the application's enum.
+  /// Maps the backend role string to the application's enum. IAM emits roles
+  /// in upper-case (`SUPERVISOR`, `DRIVER`, and their `ROLE_`-prefixed
+  /// variants), so the match is case-insensitive and substring-based rather
+  /// than an exact `== 'supervisor'` (which silently misclassified every
+  /// supervisor as an operator). Anything that isn't a supervisor — chiefly
+  /// `DRIVER` — is treated as an operator, matching this app's driver-first
+  /// scope.
   SessionUser toDomain() => SessionUser(
     workerId: workerId,
     fullName: fullName,
-    role: role == 'supervisor'
+    role: role.toUpperCase().contains('SUPERVISOR')
         ? UserRole.supervisor
         : UserRole.operator,
     driverId: driverId,

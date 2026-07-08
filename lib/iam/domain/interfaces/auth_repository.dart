@@ -14,4 +14,8 @@ abstract interface class AuthRepository {
 
   /// Removes the stored token (logout).
   Future<void> signOut();
+
+  /// Changes the authenticated user's password. Throws [AppException] on
+  /// failure (e.g. expired token, password too short).
+  Future<void> changePassword({required String newPassword});
 }

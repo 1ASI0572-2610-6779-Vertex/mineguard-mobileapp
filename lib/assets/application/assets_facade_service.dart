@@ -8,6 +8,8 @@ class AssetsFacadeService {
 
   Future<List<Vehicle>> getVehicles() => repository.getVehicles();
 
-  Future<void> startTrip({required String vehicleId, required int driverId}) =>
+  Future<int> startTrip({required String vehicleId, required int driverId}) =>
       repository.startTrip(vehicleId: vehicleId, driverId: driverId);
+
+  Future<void> endShift(int sessionId) => repository.endShift(sessionId);
 }

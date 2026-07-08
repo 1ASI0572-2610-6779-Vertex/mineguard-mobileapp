@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
+import 'package:mobile_iot/shared/config/app_theme.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
 import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
@@ -56,7 +57,10 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                 const SizedBox(height: 4),
                 Text(
                   l10n.performanceSubtitle,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 BlocBuilder<PerformanceBloc, PerformanceState>(
@@ -106,7 +110,9 @@ class _PerformanceContent extends StatelessWidget {
                     label: l10n.performanceSafetyScoreLabel,
                     value: '${stats.safetyScore}',
                     suffix: '/100',
-                    footer: l10n.performanceSafetyScoreDelta(stats.safetyScoreDelta),
+                    footer: l10n.performanceSafetyScoreDelta(
+                      stats.safetyScoreDelta,
+                    ),
                     footerColor: AppColors.success,
                   ),
                 ),
@@ -128,17 +134,7 @@ class _PerformanceContent extends StatelessWidget {
           delay: 80,
           child: Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 16,
-                ),
-              ],
-            ),
+            decoration: AppDecorations.card(radius: 16),
             child: Row(
               children: [
                 Container(
@@ -199,10 +195,7 @@ class _PerformanceContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _AnimatedCard(
-          delay: 160,
-          child: _HoursProgressBar(stats: stats),
-        ),
+        _AnimatedCard(delay: 160, child: _HoursProgressBar(stats: stats)),
       ],
     );
   }
@@ -216,22 +209,15 @@ class _HoursProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final ratio = (stats.drivingHours / stats.drivingHoursLimit).clamp(0.0, 1.0);
+    final ratio = (stats.drivingHours / stats.drivingHoursLimit).clamp(
+      0.0,
+      1.0,
+    );
     final isNearLimit = ratio > 0.8;
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 16,
-          ),
-        ],
-      ),
+      decoration: AppDecorations.card(radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -295,17 +281,7 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 16,
-          ),
-        ],
-      ),
+      decoration: AppDecorations.card(radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -469,9 +445,10 @@ class _SkeletonBoxState extends State<_SkeletonBox>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.35, end: 0.85).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.35,
+      end: 0.85,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -482,16 +459,16 @@ class _SkeletonBoxState extends State<_SkeletonBox>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _anim,
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(widget.radius),
-          ),
-        ),
-      );
+    opacity: _anim,
+    child: Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(widget.radius),
+      ),
+    ),
+  );
 }
 
 /// Error state with a retry action to recover the load.
@@ -526,7 +503,9 @@ class _ErrorRetry extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            error is String ? error as String : localizedErrorMessage(context, error),
+            error is String
+                ? error as String
+                : localizedErrorMessage(context, error),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.textSecondary,
@@ -568,9 +547,10 @@ class _AnimatedCardState extends State<_AnimatedCard>
       vsync: this,
       duration: const Duration(milliseconds: 380),
     );
-    _opacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
@@ -589,7 +569,7 @@ class _AnimatedCardState extends State<_AnimatedCard>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _opacity,
-        child: SlideTransition(position: _slide, child: widget.child),
-      );
+    opacity: _opacity,
+    child: SlideTransition(position: _slide, child: widget.child),
+  );
 }

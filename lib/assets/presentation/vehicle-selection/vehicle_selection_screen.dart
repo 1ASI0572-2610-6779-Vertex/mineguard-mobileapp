@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mobile_iot/shared/config/app_colors.dart';
+import 'package:mobile_iot/shared/config/app_theme.dart';
 import 'package:mobile_iot/shared/application/session_cubit.dart';
 import 'package:mobile_iot/shared/widgets/greeting_header.dart';
+import 'package:mobile_iot/shared/widgets/app_feedback.dart';
 import 'package:mobile_iot/shared/widgets/localized_error_message.dart';
 import 'package:mobile_iot/l10n/generated/app_localizations.dart';
 import '../../../injections.dart';
@@ -39,6 +41,22 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
     super.dispose();
   }
 
+  Future<void> _confirmEndShift(BuildContext context, Vehicle vehicle) async {
+    final l10n = AppLocalizations.of(context)!;
+    final ok = await showPremiumConfirm(
+      context,
+      title: l10n.vehicleSelectionEndShift,
+      message: l10n.vehicleSelectionEndShiftConfirm(vehicle.name),
+      confirmLabel: l10n.vehicleSelectionEndShift,
+      cancelLabel: l10n.commonCancel,
+      icon: Icons.logout_rounded,
+      severity: AppSeverity.critical,
+    );
+    if (ok && context.mounted) {
+      _bloc.add(const EndShiftEvent());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<SessionCubit>().state;
@@ -46,22 +64,34 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 
     return BlocProvider<VehicleSelectionBloc>.value(
       value: _bloc,
-      child: BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
-        listenWhen: (previous, current) =>
-            previous.assigning && !current.assigning,
-        listener: (context, state) {
-          if (state.assignError == null && state.assigned != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.vehicleSelectionShiftStarted(state.assigned!.name)),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-            );
-          }
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
+            listenWhen: (previous, current) =>
+                previous.assigning && !current.assigning,
+            listener: (context, state) {
+              if (state.assignError == null && state.assigned != null) {
+                AppSnack.success(
+                  context,
+                  l10n.vehicleSelectionShiftStarted(state.assigned!.name),
+                );
+              }
+            },
+          ),
+          BlocListener<VehicleSelectionBloc, VehicleSelectionState>(
+            listenWhen: (previous, current) =>
+                previous.ending && !current.ending,
+            listener: (context, state) {
+              if (state.ended) {
+                AppSnack.success(context, l10n.vehicleSelectionShiftEnded);
+                // Refresh so the just-freed vehicle shows as available again.
+                _bloc.add(const FetchVehiclesEvent());
+              } else if (state.endError != null) {
+                AppSnack.error(context, l10n.vehicleSelectionEndShiftError);
+              }
+            },
+          ),
+        ],
         child: Column(
           children: [
             if (user != null) GreetingHeader(user: user),
@@ -80,8 +110,10 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                   const SizedBox(height: 4),
                   Text(
                     l10n.vehicleSelectionSubtitle,
-                    style:
-                        const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   BlocBuilder<VehicleSelectionBloc, VehicleSelectionState>(
@@ -90,12 +122,18 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                         _AssignedCard(
                           vehicle: state.assigned,
                           assigning: state.assigning,
+                          ending: state.ending,
+                          onEndShift: state.assigned != null && !state.ending
+                              ? () => _confirmEndShift(context, state.assigned!)
+                              : null,
                         ),
                         if (state.assignError != null) ...[
                           const SizedBox(height: 8),
                           _InlineError(
                             message: localizedErrorMessage(
-                                context, state.assignError!),
+                              context,
+                              state.assignError!,
+                            ),
                           ),
                         ],
                       ],
@@ -143,7 +181,8 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                         case VehicleSelectionStatus.error:
                           return _ErrorRetry(
                             error: state.error ?? l10n.commonUnknownError,
-                            onRetry: () => _bloc.add(const FetchVehiclesEvent()),
+                            onRetry: () =>
+                                _bloc.add(const FetchVehiclesEvent()),
                           );
                         case VehicleSelectionStatus.loaded:
                           final filtered = state.vehicles.where((v) {
@@ -159,8 +198,9 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                               child: Center(
                                 child: Text(
                                   l10n.vehicleSelectionEmpty,
-                                  style:
-                                      const TextStyle(color: AppColors.textSecondary),
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ),
                             );
@@ -175,13 +215,15 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                                     delay: i * 60,
                                     child: _VehicleTile(
                                       vehicle: filtered[i],
-                                      selected: state.assigned?.id ==
-                                          filtered[i].id,
-                                      onTap: filtered[i].status ==
+                                      selected:
+                                          state.assigned?.id == filtered[i].id,
+                                      onTap:
+                                          filtered[i].status ==
                                                   VehicleStatus.available &&
                                               !state.assigning
                                           ? () => _bloc.add(
-                                              AssignVehicleEvent(filtered[i]))
+                                              AssignVehicleEvent(filtered[i]),
+                                            )
                                           : null,
                                     ),
                                   ),
@@ -206,7 +248,14 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
 class _AssignedCard extends StatelessWidget {
   final Vehicle? vehicle;
   final bool assigning;
-  const _AssignedCard({required this.vehicle, required this.assigning});
+  final bool ending;
+  final VoidCallback? onEndShift;
+  const _AssignedCard({
+    required this.vehicle,
+    required this.assigning,
+    this.ending = false,
+    this.onEndShift,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -214,17 +263,7 @@ class _AssignedCard extends StatelessWidget {
     final hasVehicle = vehicle != null;
     return Container(
       padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 16,
-          ),
-        ],
-      ),
+      decoration: AppDecorations.card(radius: 20),
       child: assigning
           ? const Center(
               child: Padding(
@@ -248,13 +287,14 @@ class _AssignedCard extends StatelessWidget {
                         ? Icons.check_circle
                         : Icons.report_problem_rounded,
                     size: 30,
-                    color:
-                        hasVehicle ? AppColors.success : AppColors.warning,
+                    color: hasVehicle ? AppColors.success : AppColors.warning,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  hasVehicle ? vehicle!.name : l10n.vehicleSelectionNoneAssigned,
+                  hasVehicle
+                      ? vehicle!.name
+                      : l10n.vehicleSelectionNoneAssigned,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
@@ -271,6 +311,38 @@ class _AssignedCard extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
+                if (hasVehicle) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: ending ? null : onEndShift,
+                      icon: ending
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                              ),
+                            )
+                          : const Icon(Icons.logout, size: 18),
+                      label: Text(l10n.vehicleSelectionEndShift),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        backgroundColor: AppColors.errorSoft,
+                        side: BorderSide.none,
+                        minimumSize: const Size.fromHeight(46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
     );
@@ -299,17 +371,15 @@ class _VehicleTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
+            color: AppColors.backgroundCard,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
+              color: selected ? AppColors.primary : const Color(0xFFEDEFF4),
               width: selected ? 1.6 : 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 16,
-              ),
-            ],
+            boxShadow: selected
+                ? AppShadows.brand(opacity: 0.16)
+                : AppShadows.card,
           ),
           child: Row(
             children: [
@@ -391,11 +461,7 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: fg,
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
-        ),
+        style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 11),
       ),
     );
   }
@@ -456,7 +522,9 @@ class _ErrorRetry extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            error is String ? error as String : localizedErrorMessage(context, error),
+            error is String
+                ? error as String
+                : localizedErrorMessage(context, error),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.textSecondary,
@@ -540,9 +608,10 @@ class _SkeletonBoxState extends State<_SkeletonBox>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.35, end: 0.85).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.35,
+      end: 0.85,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -553,16 +622,16 @@ class _SkeletonBoxState extends State<_SkeletonBox>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _anim,
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(widget.radius),
-          ),
-        ),
-      );
+    opacity: _anim,
+    child: Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(widget.radius),
+      ),
+    ),
+  );
 }
 
 class _AnimatedCard extends StatefulWidget {
@@ -587,9 +656,10 @@ class _AnimatedCardState extends State<_AnimatedCard>
       vsync: this,
       duration: const Duration(milliseconds: 380),
     );
-    _opacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
@@ -608,7 +678,7 @@ class _AnimatedCardState extends State<_AnimatedCard>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _opacity,
-        child: SlideTransition(position: _slide, child: widget.child),
-      );
+    opacity: _opacity,
+    child: SlideTransition(position: _slide, child: widget.child),
+  );
 }

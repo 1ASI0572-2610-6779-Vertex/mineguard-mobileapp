@@ -35,29 +35,58 @@ class _OperatorHomeScreenState extends State<OperatorHomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundMuted,
-      body: tabs[_index],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        backgroundColor: AppColors.backgroundCard,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.directions_car_outlined),
-            selectedIcon: const Icon(Icons.directions_car, color: AppColors.primary),
-            label: l10n.bootstrapNavHome,
+      // Tab bodies extend to the bottom edge; each tab's header handles the
+      // top notch inset itself, so no SafeArea is needed here.
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        switchInCurve: Curves.easeOut,
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        // Key on the index so the switcher animates between tabs.
+        child: KeyedSubtree(key: ValueKey(_index), child: tabs[_index]),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.backgroundCard,
+          border: const Border(
+            top: BorderSide(color: Color(0xFFEDEFF4), width: 1),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.show_chart_outlined),
-            selectedIcon: const Icon(Icons.show_chart, color: AppColors.primary),
-            label: l10n.bootstrapNavPerformance,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person, color: AppColors.primary),
-            label: l10n.bootstrapNavProfile,
-          ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 24,
+              offset: const Offset(0, -6),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          backgroundColor: Colors.transparent,
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.directions_car_outlined),
+              selectedIcon: const Icon(
+                Icons.directions_car,
+                color: AppColors.primary,
+              ),
+              label: l10n.bootstrapNavHome,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.show_chart_outlined),
+              selectedIcon: const Icon(
+                Icons.show_chart,
+                color: AppColors.primary,
+              ),
+              label: l10n.bootstrapNavPerformance,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person, color: AppColors.primary),
+              label: l10n.bootstrapNavProfile,
+            ),
+          ],
+        ),
       ),
     );
   }
